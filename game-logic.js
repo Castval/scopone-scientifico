@@ -123,12 +123,15 @@ class ScoponeScientifico {
 
     // Nessuna carta al tavolo
     // 10 carte a testa
-    this.distribuisciCarte();
-  }
-
-  distribuisciCarte() {
     for (const g of this.giocatori) {
       g.mano = this.mazzo.pesca(10);
+    }
+
+    // Il primo giocatore pesca 1 carta prima di giocare
+    const primo = this.giocatori[this.turnoCorrente];
+    const pescata = this.mazzo.pesca(1);
+    if (pescata.length > 0) {
+      primo.mano.push(...pescata);
     }
   }
 
@@ -256,9 +259,8 @@ class ScoponeScientifico {
 
       if (verifica.scopa) {
         // L'ultima mossa del round non conta come scopa
-        const maniVuote = this.giocatori.every(g => g.mano.length === 0);
-        const mazzoVuoto = this.mazzo.rimanenti() === 0;
-        if (!(maniVuote && mazzoVuoto)) {
+        const ultimaMossa = this.giocatori.every(g => g.mano.length === 0) && this.mazzo.rimanenti() === 0;
+        if (!ultimaMossa) {
           giocatore.scope.push({ carta: carta.id, valore: 1 });
         }
       }
@@ -267,15 +269,18 @@ class ScoponeScientifico {
     // Prossimo turno
     this.turnoCorrente = (this.turnoCorrente + 1) % 2;
 
-    // Controlla se le mani sono vuote
+    // Controlla se le mani sono vuote e il mazzo e' finito
     const maniVuote = this.giocatori.every(g => g.mano.length === 0);
 
-    if (maniVuote) {
-      if (this.mazzo.rimanenti() > 0) {
-        this.distribuisciCarte();
-      } else {
-        // Fine round - carte rimanenti all'ultimo che ha preso
-        this.fineRound();
+    if (maniVuote && this.mazzo.rimanenti() === 0) {
+      // Fine round - carte rimanenti all'ultimo che ha preso
+      this.fineRound();
+    } else if (this.mazzo.rimanenti() > 0) {
+      // Il prossimo giocatore pesca 1 carta dal mazzo
+      const prossimo = this.giocatori[this.turnoCorrente];
+      const pescata = this.mazzo.pesca(1);
+      if (pescata.length > 0) {
+        prossimo.mano.push(...pescata);
       }
     }
 
