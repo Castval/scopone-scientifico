@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scopone Scientifico</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Schermata Lobby -->
+    <div id="lobby" class="schermata attiva">
+      <h1>Scopone Scientifico</h1>
+      <p class="sottotitolo">Gioco di carte con 40 carte napoletane - 2 giocatori</p>
+
+      <div class="form-gruppo">
+        <label for="nomeGiocatore">Il tuo nome:</label>
+        <input type="text" id="nomeGiocatore" placeholder="Inserisci il tuo nome" maxlength="20">
+      </div>
+
+      <div class="bottoni-lobby">
+        <div class="form-gruppo">
+          <label for="puntiVittoria">Punti per vincere:</label>
+          <select id="puntiVittoria">
+            <option value="7">7 punti</option>
+            <option value="11">11 punti</option>
+            <option value="16">16 punti</option>
+            <option value="21" selected>21 punti</option>
+            <option value="31">31 punti</option>
+          </select>
+        </div>
+        <button id="btnCreaStanza" class="btn-primario">Crea Stanza</button>
+        <div class="divisore">oppure</div>
+        <div class="form-gruppo">
+          <div class="input-stanza-container">
+            <input type="text" id="codiceStanza" placeholder="Codice stanza" maxlength="6" autocomplete="off">
+            <button type="button" id="btnMostraStanze" class="btn-stanze" title="Mostra stanze disponibili">▼</button>
+          </div>
+          <div id="listaStanze" class="lista-stanze nascosto"></div>
+          <button id="btnUnisciti" class="btn-secondario">Unisciti</button>
+        </div>
+      </div>
+
+      <div id="messaggioLobby" class="messaggio"></div>
+
+      <div class="sezione-regole">
+        <h3>Regole</h3>
+        <div class="regole-contenuto">
+          <p><strong>Mazzo:</strong> 40 carte napoletane (1 mazzo)</p>
+          <p><strong>Distribuzione:</strong> 10 carte a testa, nessuna carta al tavolo</p>
+
+          <h4>Prese</h4>
+          <ul>
+            <li>Se c'è una carta singola dello stesso valore, devi prenderla (ha priorità sulle somme)</li>
+            <li>Se non puoi prendere, devi posare la carta al tavolo</li>
+            <li>L'asso vale 1 (non prende tutto)</li>
+          </ul>
+
+          <h4>Punteggi</h4>
+          <ul>
+            <li><strong>Scopa:</strong> 1 punto (l'ultima presa del round non conta come scopa)</li>
+            <li><strong>Settebello (7 di denari):</strong> 1 punto</li>
+            <li><strong>Più carte di denari:</strong> 1 punto</li>
+            <li><strong>Più carte totali:</strong> 1 punto</li>
+            <li><strong>Primiera:</strong> 1 punto</li>
+          </ul>
+
+          <p><strong>Vittoria:</strong> punti scelti dal creatore della stanza</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Schermata Attesa -->
+    <div id="attesa" class="schermata">
+      <h2>Stanza creata!</h2>
+      <div class="codice-stanza">
+        <span>Codice:</span>
+        <strong id="codiceStanzaDisplay"></strong>
+      </div>
+      <p>Condividi questo codice con il tuo avversario</p>
+      <div class="loader"></div>
+      <p>In attesa dell'avversario...</p>
+    </div>
+
+    <!-- Schermata Gioco -->
+    <div id="gioco" class="schermata">
+      <div class="info-partita">
+        <div class="info-giocatore avversario">
+          <span class="nome" id="nomeAvversario">Avversario</span>
+          <span class="punti">Punti: <strong id="puntiAvversario">0</strong></span>
+          <span class="carte-info">Carte: <span id="carteAvversario">0</span></span>
+        </div>
+        <div class="info-centro">
+          <span id="turnoIndicatore">Turno avversario</span>
+          <span class="obiettivo-info">Obiettivo: <strong id="puntiVittoriaDisplay">21</strong> pt</span>
+          <span class="mazzo-info">Mazzo: <span id="carteRimanenti">0</span></span>
+        </div>
+        <div class="info-giocatore tu">
+          <span class="nome" id="nomeGiocatoreDisplay">Tu</span>
+          <span class="punti">Punti: <strong id="puntiGiocatore">0</strong></span>
+        </div>
+      </div>
+
+      <div class="area-avversario-container">
+        <div class="area-avversario">
+          <div id="manoAvversario" class="mano-carte dorso"></div>
+        </div>
+        <div class="area-prese avversario">
+          <h4>Prese avversario</h4>
+          <div id="mazzoPreseAvversario" class="mazzo-prese"></div>
+        </div>
+      </div>
+
+      <div class="tavolo-container">
+        <h3>Tavolo</h3>
+        <div id="tavolo" class="tavolo"></div>
+      </div>
+
+      <div class="area-giocatore-container">
+        <div class="area-prese">
+          <h4>Le tue prese</h4>
+          <div id="mazzoPrese" class="mazzo-prese"></div>
+        </div>
+        <div class="area-giocatore">
+          <h3>La tua mano</h3>
+          <div id="manoGiocatore" class="mano-carte"></div>
+        </div>
+      </div>
+
+      <div id="azioniMossa" class="azioni-mossa nascosto">
+        <button id="btnConferma" class="btn-primario">Conferma</button>
+        <button id="btnAnnulla" class="btn-secondario">Annulla</button>
+        <button id="btnPosa" class="btn-secondario">Posa carta</button>
+      </div>
+
+      <div id="messaggioGioco" class="messaggio"></div>
+    </div>
+
+    <!-- Schermata Fine Round -->
+    <div id="fineRound" class="schermata">
+      <h2 id="titoloFineRound">Fine Round</h2>
+      <div class="riepilogo-punti">
+        <div class="colonna-punti">
+          <h3 id="nomeG1">Giocatore 1</h3>
+          <table class="tabella-punti">
+            <tr><td>Scope</td><td id="scopeG1">0</td><td class="carte-cell"><span id="carteScopeG1" class="mini-carte"></span></td></tr>
+            <tr><td>Denari</td><td id="denariG1">0</td><td></td></tr>
+            <tr><td>Carte</td><td id="carteG1">0</td><td></td></tr>
+            <tr><td>Primiera</td><td id="primieraG1">0</td><td class="carte-cell"><span id="cartePrimieraG1" class="mini-carte"></span></td></tr>
+            <tr><td>Settebello</td><td id="settebelloG1">0</td><td></td></tr>
+            <tr class="riga-totale"><td>Totale round</td><td id="puntiRoundG1">0</td><td></td></tr>
+          </table>
+          <p class="punti-totali">Punteggio: <strong id="puntiTotaliG1">0</strong></p>
+        </div>
+        <div class="colonna-punti">
+          <h3 id="nomeG2">Giocatore 2</h3>
+          <table class="tabella-punti">
+            <tr><td>Scope</td><td id="scopeG2">0</td><td class="carte-cell"><span id="carteScopeG2" class="mini-carte"></span></td></tr>
+            <tr><td>Denari</td><td id="denariG2">0</td><td></td></tr>
+            <tr><td>Carte</td><td id="carteG2">0</td><td></td></tr>
+            <tr><td>Primiera</td><td id="primieraG2">0</td><td class="carte-cell"><span id="cartePrimieraG2" class="mini-carte"></span></td></tr>
+            <tr><td>Settebello</td><td id="settebelloG2">0</td><td></td></tr>
+            <tr class="riga-totale"><td>Totale round</td><td id="puntiRoundG2">0</td><td></td></tr>
+          </table>
+          <p class="punti-totali">Punteggio: <strong id="puntiTotaliG2">0</strong></p>
+        </div>
+      </div>
+      <button id="btnProssimoRound" class="btn-primario">Prossimo Round</button>
+      <button id="btnNuovaPartita" class="btn-primario nascosto">Nuova Partita</button>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="client.js"></script>
+</body>
+</html>

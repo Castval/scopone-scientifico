@@ -1,0 +1,793 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #1a2a47 0%, #2d3f5a 100%);
+  min-height: 100vh;
+  color: #fff;
+}
+
+#app {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.schermata {
+  display: none;
+}
+
+.schermata.attiva {
+  display: block;
+}
+
+/* Lobby */
+#lobby {
+  text-align: center;
+  padding-top: 50px;
+}
+
+#lobby h1 {
+  font-size: 3em;
+  margin-bottom: 10px;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.sottotitolo {
+  color: #a2c0d5;
+  margin-bottom: 40px;
+}
+
+.form-gruppo {
+  margin: 20px auto;
+  max-width: 300px;
+}
+
+.form-gruppo label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+}
+
+.form-gruppo input, .form-gruppo select {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  text-align: center;
+}
+
+.form-gruppo select {
+  background: #fff;
+  color: #333;
+  cursor: pointer;
+  appearance: auto;
+}
+
+#codiceStanza {
+  text-transform: uppercase;
+}
+
+/* Input stanza con dropdown */
+.input-stanza-container {
+  display: flex;
+  gap: 0;
+}
+
+.input-stanza-container input {
+  border-radius: 8px 0 0 8px;
+  flex: 1;
+}
+
+.btn-stanze {
+  background: rgba(255,255,255,0.3);
+  border: none;
+  border-radius: 0 8px 8px 0;
+  padding: 12px 15px;
+  color: #fff;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.2s;
+}
+
+.btn-stanze:hover {
+  background: rgba(255,255,255,0.4);
+}
+
+.lista-stanze {
+  background: #fff;
+  border-radius: 8px;
+  margin-top: 5px;
+  max-height: 200px;
+  overflow-y: auto;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+.lista-stanze.nascosto {
+  display: none;
+}
+
+.stanza-item {
+  padding: 12px 15px;
+  cursor: pointer;
+  color: #1a2a47;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.stanza-item:last-child {
+  border-bottom: none;
+}
+
+.stanza-item:hover {
+  background: #f0f0f0;
+}
+
+.stanza-item .codice {
+  font-weight: bold;
+  font-family: monospace;
+  font-size: 1.1em;
+}
+
+.stanza-item .creatore {
+  font-size: 0.9em;
+  color: #666;
+}
+
+.lista-stanze .nessuna-stanza {
+  padding: 15px;
+  text-align: center;
+  color: #666;
+}
+
+.bottoni-lobby {
+  margin-top: 30px;
+}
+
+.btn-primario, .btn-secondario {
+  padding: 12px 30px;
+  font-size: 16px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  margin: 5px;
+}
+
+.btn-primario {
+  background: linear-gradient(135deg, #c0a030 0%, #b09020 100%);
+  color: #1a2a47;
+  font-weight: bold;
+}
+
+.btn-primario:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(192, 160, 48, 0.4);
+}
+
+.btn-secondario {
+  background: rgba(255,255,255,0.2);
+  color: #fff;
+}
+
+.btn-secondario:hover {
+  background: rgba(255,255,255,0.3);
+}
+
+.divisore {
+  margin: 25px 0;
+  color: #a2c0d5;
+  font-size: 1.1em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+}
+
+.divisore::before,
+.divisore::after {
+  content: '';
+  flex: 1;
+  max-width: 100px;
+  height: 1px;
+  background: linear-gradient(to right, transparent, #a2c0d5, transparent);
+}
+
+.messaggio {
+  margin-top: 20px;
+  padding: 10px 20px;
+  border-radius: 8px;
+  display: inline-block;
+}
+
+.messaggio.errore {
+  background: rgba(220, 53, 69, 0.8);
+}
+
+.messaggio.successo {
+  background: rgba(40, 167, 69, 0.8);
+}
+
+/* Messaggio durante il gioco - centrato e sopra tutto */
+#messaggioGioco {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1000;
+  font-size: 1.2em;
+  padding: 15px 30px;
+}
+
+/* Sezione Regole */
+.sezione-regole {
+  margin-top: 40px;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 12px;
+  text-align: left;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.sezione-regole h3 {
+  text-align: center;
+  color: #c0a030;
+  margin-bottom: 15px;
+  cursor: pointer;
+}
+
+.sezione-regole h3::after {
+  content: ' ▼';
+  font-size: 0.7em;
+}
+
+.sezione-regole.chiusa h3::after {
+  content: ' ▶';
+}
+
+.sezione-regole.chiusa .regole-contenuto {
+  display: none;
+}
+
+.regole-contenuto {
+  font-size: 0.9em;
+  line-height: 1.6;
+}
+
+.regole-contenuto h4 {
+  color: #a2c0d5;
+  margin-top: 15px;
+  margin-bottom: 8px;
+}
+
+.regole-contenuto ul {
+  margin-left: 20px;
+  margin-bottom: 10px;
+}
+
+.regole-contenuto li {
+  margin-bottom: 5px;
+}
+
+.regole-contenuto p {
+  margin-bottom: 8px;
+}
+
+/* Attesa */
+#attesa {
+  text-align: center;
+  padding-top: 100px;
+}
+
+.codice-stanza {
+  background: rgba(255,255,255,0.1);
+  padding: 20px 40px;
+  border-radius: 12px;
+  display: inline-block;
+  margin: 30px 0;
+}
+
+.codice-stanza strong {
+  font-size: 2.5em;
+  letter-spacing: 5px;
+  color: #c0a030;
+}
+
+.loader {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(255,255,255,0.3);
+  border-top-color: #c0a030;
+  border-radius: 50%;
+  margin: 30px auto;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Gioco */
+#gioco {
+  display: none;
+}
+
+#gioco.attiva {
+  display: block;
+}
+
+.info-partita {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(0,0,0,0.3);
+  padding: 15px 20px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+
+.info-giocatore {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.info-giocatore .nome {
+  font-weight: bold;
+  font-size: 1.1em;
+}
+
+.info-giocatore.tu .nome {
+  color: #c0a030;
+}
+
+.info-centro {
+  text-align: center;
+}
+
+#turnoIndicatore {
+  font-weight: bold;
+  padding: 8px 16px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.1);
+}
+
+#turnoIndicatore.mio-turno {
+  background: #c0a030;
+  color: #1a2a47;
+}
+
+.area-avversario, .area-giocatore {
+  margin: 20px 0;
+}
+
+.area-avversario h3, .area-giocatore h3, .tavolo-container h3 {
+  text-align: center;
+  margin-bottom: 10px;
+  color: #a2c0d5;
+}
+
+.mano-carte {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  min-height: 150px;
+}
+
+.mano-carte.dorso .carta {
+  background: linear-gradient(135deg, #8b0000 0%, #5c0000 100%);
+}
+
+.mano-carte.dorso .carta::before {
+  content: '';
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  border: 2px solid #c0a030;
+  border-radius: 4px;
+}
+
+/* Carte */
+.carta {
+  width: 80px;
+  height: 140px;
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  position: relative;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+.carta img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.carta:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+}
+
+.carta.selezionata {
+  transform: translateY(-15px);
+  box-shadow: 0 12px 25px rgba(192, 160, 48, 0.6);
+  outline: 3px solid #c0a030;
+}
+
+.carta.selezionabile {
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(192, 160, 48, 0.4); }
+  50% { box-shadow: 0 0 0 10px rgba(192, 160, 48, 0); }
+}
+
+/* Evidenzia settebello */
+.carta.settebello {
+  outline: 2px solid #c0a030;
+}
+
+/* Tavolo */
+.tavolo-container {
+  background: rgba(0,0,0,0.2);
+  padding: 20px;
+  border-radius: 12px;
+  margin: 20px 0;
+  position: relative;
+}
+
+.tavolo {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  min-height: 150px;
+  padding: 10px;
+}
+
+.tavolo .carta {
+  cursor: pointer;
+}
+
+/* Azioni */
+.azioni-mossa {
+  text-align: center;
+  margin: 20px 0;
+  padding: 15px;
+  background: rgba(0,0,0,0.3);
+  border-radius: 12px;
+}
+
+.azioni-mossa.nascosto {
+  display: none;
+}
+
+/* Fine Round */
+#fineRound {
+  text-align: center;
+  padding-top: 50px;
+}
+
+.riepilogo-punti {
+  display: flex;
+  justify-content: center;
+  gap: 60px;
+  margin: 40px 0;
+}
+
+.colonna-punti {
+  background: rgba(255,255,255,0.1);
+  padding: 30px 50px;
+  border-radius: 12px;
+}
+
+.colonna-punti h3 {
+  margin-bottom: 15px;
+  color: #c0a030;
+}
+
+.tabella-punti {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 15px;
+}
+
+.tabella-punti td {
+  padding: 6px 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.tabella-punti td:first-child {
+  text-align: left;
+}
+
+.tabella-punti td:last-child {
+  text-align: right;
+  font-weight: bold;
+}
+
+.tabella-punti .riga-totale {
+  border-top: 2px solid #c0a030;
+  background: rgba(192, 160, 48, 0.2);
+}
+
+.tabella-punti .riga-totale td {
+  padding: 10px;
+  font-weight: bold;
+  color: #c0a030;
+}
+
+.punti-totali {
+  margin-top: 10px;
+  font-size: 1.2em;
+}
+
+.colonna-punti p {
+  margin: 10px 0;
+}
+
+/* Mini carte nel riepilogo */
+.carte-cell {
+  padding-left: 10px;
+  text-align: left;
+}
+
+.mini-carte {
+  display: inline-flex;
+  gap: 3px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.mini-carta {
+  width: 28px;
+  height: 42px;
+  border-radius: 3px;
+  overflow: hidden;
+  display: inline-block;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.mini-carta img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mini-carta.con-punti {
+  position: relative;
+}
+
+.mini-carta .punti-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #c0a030;
+  color: #1a2a47;
+  font-size: 8px;
+  font-weight: bold;
+  padding: 1px 3px;
+  border-radius: 6px;
+}
+
+.conteggio-carte {
+  font-size: 0.85em;
+  color: #a2c0d5;
+}
+
+.nascosto {
+  display: none !important;
+}
+
+/* Carta giocata dall'avversario */
+.carta-avversario-giocata {
+  position: absolute;
+  top: -80px;
+  left: 50%;
+  transform: translateX(-50%);
+  animation: cartaAvversario 1s ease-in-out;
+  outline: 3px solid #ff6b6b;
+  box-shadow: 0 0 25px rgba(255, 107, 107, 0.8);
+  z-index: 100;
+}
+
+@keyframes cartaAvversario {
+  0% {
+    transform: translateX(-50%) translateY(-30px) scale(1.3);
+    opacity: 0;
+  }
+  20% {
+    transform: translateX(-50%) translateY(0) scale(1.2);
+    opacity: 1;
+  }
+  80% {
+    transform: translateX(-50%) translateY(0) scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-50%) translateY(0) scale(1);
+    opacity: 0;
+  }
+}
+
+/* Area avversario con prese */
+.area-avversario-container {
+  display: flex;
+  align-items: flex-start;
+  gap: 30px;
+  margin: 20px 0;
+}
+
+.area-avversario-container .area-avversario {
+  flex: 1;
+  margin: 0;
+}
+
+.area-avversario-container .area-prese {
+  min-width: 120px;
+  text-align: center;
+}
+
+.area-avversario-container .area-prese h4 {
+  color: #ff9999;
+  margin-bottom: 10px;
+  font-size: 0.9em;
+}
+
+/* Area giocatore con prese */
+.area-giocatore-container {
+  display: flex;
+  align-items: flex-start;
+  gap: 30px;
+  margin: 20px 0;
+}
+
+.area-giocatore {
+  flex: 1;
+  margin: 0;
+}
+
+.area-prese {
+  min-width: 120px;
+  text-align: center;
+}
+
+.area-prese h4 {
+  color: #a2c0d5;
+  margin-bottom: 10px;
+  font-size: 0.9em;
+}
+
+/* Mazzo delle prese */
+.mazzo-prese {
+  position: relative;
+  width: 90px;
+  height: 140px;
+  margin: 0 auto;
+}
+
+.mazzo-prese .carta-presa {
+  position: absolute;
+  width: 70px;
+  height: 120px;
+  background: linear-gradient(135deg, #8b0000 0%, #5c0000 100%);
+  border-radius: 6px;
+  box-shadow: 1px 1px 3px rgba(0,0,0,0.4);
+  cursor: default;
+}
+
+.mazzo-prese .carta-presa::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  border: 1.5px solid #c0a030;
+  border-radius: 3px;
+}
+
+/* Carta scopa - ruotata di traverso */
+.mazzo-prese .carta-scopa {
+  position: absolute;
+  width: 70px;
+  height: 120px;
+  border-radius: 6px;
+  box-shadow: 2px 2px 8px rgba(0,0,0,0.5);
+  cursor: default;
+  transform: rotate(90deg);
+  z-index: 50;
+  overflow: visible;
+}
+
+.mazzo-prese .carta-scopa img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+/* Indicatore punti scopa */
+.mazzo-prese .scopa-punti {
+  position: absolute;
+  top: -25px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-90deg);
+  background: #c0a030;
+  color: #1a2a47;
+  font-size: 14px;
+  font-weight: bold;
+  padding: 4px 8px;
+  border-radius: 8px;
+  z-index: 200;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+  white-space: nowrap;
+}
+
+/* Contatore prese */
+.contatore-prese {
+  margin-top: 10px;
+  font-size: 0.85em;
+  color: #a2c0d5;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .carta {
+    width: 55px;
+    height: 96px;
+  }
+
+  .info-partita {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .riepilogo-punti {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .area-giocatore-container,
+  .area-avversario-container {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .area-prese {
+    order: 2;
+    margin-top: 20px;
+  }
+
+  .area-avversario-container .area-prese {
+    order: 2;
+  }
+
+  .mazzo-prese {
+    width: 70px;
+    height: 130px;
+  }
+
+  .mazzo-prese .carta-presa,
+  .mazzo-prese .carta-scopa {
+    width: 55px;
+    height: 96px;
+  }
+}
