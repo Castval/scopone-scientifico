@@ -35,6 +35,7 @@ function getImmagineCarta(valore, seme) {
 // Stato locale
 let statoGioco = null;
 let cartaSelezionata = null;
+let sessioneCorrente = null;
 let carteSelezionateTavolo = [];
 let combinazioniDisponibili = [];
 let puoiPosare = false;
@@ -371,6 +372,7 @@ document.getElementById('btnCreaStanza').addEventListener('click', () => {
     return;
   }
   const puntiVittoria = parseInt(document.getElementById('puntiVittoria').value);
+  sessioneCorrente = { nome };
   socket.emit('creaStanza', { nome, puntiVittoria });
 });
 
@@ -387,6 +389,7 @@ document.getElementById('btnUnisciti').addEventListener('click', () => {
     return;
   }
 
+  sessioneCorrente = { codice, nome };
   socket.emit('uniscitiStanza', { codice, nome });
 });
 
@@ -469,6 +472,7 @@ document.getElementById('btnNuovaPartita').addEventListener('click', () => {
 
 // Socket events
 socket.on('stanzaCreata', ({ codice, nome }) => {
+  if (sessioneCorrente) sessioneCorrente.codice = codice;
   document.getElementById('codiceStanzaDisplay').textContent = codice;
   mostraSchermata('attesa');
 });
@@ -648,9 +652,22 @@ function renderizzaMiniCarte(elementId, carte, mostraPunti = false) {
   }
 }
 
-socket.on('avversarioDisconnesso', () => {
-  mostraMessaggio('L\'avversario si è disconnesso', 'errore');
-  setTimeout(() => {
-    mostraSchermata('lobby');
-  }, 2000);
+socket.on('avversarioDisconnesso', ({ nome, timeout }) => {
+  mostraMessaggio(`${nome} si è disconnesso. Attendo riconnessione (${timeout}s)...`, 'info');
+});
+
+socket.on('giocatoreRiconnesso', ({ nome }) => {
+  mostraMessaggio(`${nome} si è riconnesso!`, 'successo');
+});
+
+socket.on('avversarioAbbandonato', ({ nome }) => {
+  mostraMessaggio(`${nome} ha abbandonato la partita`, 'errore');
+  sessioneCorrente = null;
+  setTimeout(() => mostraSchermata('lobby'), 3000);
+});
+
+socket.on('connect', () => {
+  if (sessioneCorrente && sessioneCorrente.codice && sessioneCorrente.nome) {
+    socket.emit('uniscitiStanza', { codice: sessioneCorrente.codice, nome: sessioneCorrente.nome });
+  }
 });

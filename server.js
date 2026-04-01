@@ -15,6 +15,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Stanze di gioco
 const stanze = new Map();
+const disconnessioniPendenti = new Map();
 
 // Genera codice stanza
 function generaCodiceStanza() {
@@ -66,6 +67,29 @@ io.on('connection', (socket) => {
 
     if (!partita) {
       socket.emit('errore', 'Stanza non trovata');
+      return;
+    }
+
+    // Controlla se è una riconnessione
+    const chiaveDisc = `${codice}_${nome}`;
+    const giocatoreDisconnesso = partita.giocatori.find(g => g.nome === nome && g.disconnesso);
+
+    if (giocatoreDisconnesso) {
+      giocatoreDisconnesso.id = socket.id;
+      giocatoreDisconnesso.disconnesso = false;
+
+      if (disconnessioniPendenti.has(chiaveDisc)) {
+        clearTimeout(disconnessioniPendenti.get(chiaveDisc));
+        disconnessioniPendenti.delete(chiaveDisc);
+      }
+
+      socket.join(codice);
+      socket.codiceStanza = codice;
+      socket.nomeGiocatore = nome;
+
+      socket.emit('partitaIniziata', partita.getStato(socket.id));
+      io.to(codice).emit('giocatoreRiconnesso', { nome });
+      console.log(`Giocatore ${nome} riconnesso nella stanza ${codice}`);
       return;
     }
 
@@ -217,13 +241,38 @@ io.on('connection', (socket) => {
     const partita = stanze.get(codice);
     if (!partita) return;
 
-    partita.rimuoviGiocatore(socket.id);
+    const giocatore = partita.giocatori.find(g => g.id === socket.id);
+    if (!giocatore) return;
 
-    io.to(codice).emit('avversarioDisconnesso');
+    if (partita.stato === 'inCorso' || partita.stato === 'fineRound') {
+      giocatore.disconnesso = true;
+      const nome = giocatore.nome;
+      const chiaveDisc = `${codice}_${nome}`;
 
-    if (partita.giocatori.length === 0) {
-      stanze.delete(codice);
-      console.log(`Stanza ${codice} eliminata`);
+      io.to(codice).emit('avversarioDisconnesso', { nome, timeout: 180 });
+      console.log(`Giocatore ${nome} disconnesso dalla stanza ${codice}, attendo riconnessione...`);
+
+      const timer = setTimeout(() => {
+        disconnessioniPendenti.delete(chiaveDisc);
+        partita.rimuoviGiocatore(giocatore.id);
+        io.to(codice).emit('avversarioAbbandonato', { nome });
+        console.log(`Giocatore ${nome} rimosso dalla stanza ${codice} (timeout)`);
+
+        if (partita.giocatori.filter(g => !g.disconnesso).length === 0) {
+          stanze.delete(codice);
+          console.log(`Stanza ${codice} eliminata`);
+        }
+      }, 180000);
+
+      disconnessioniPendenti.set(chiaveDisc, timer);
+    } else {
+      partita.rimuoviGiocatore(socket.id);
+      io.to(codice).emit('avversarioAbbandonato', { nome: giocatore.nome });
+
+      if (partita.giocatori.length === 0) {
+        stanze.delete(codice);
+        console.log(`Stanza ${codice} eliminata`);
+      }
     }
   });
 });
