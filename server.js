@@ -70,13 +70,19 @@ io.on('connection', (socket) => {
       return;
     }
 
-    // Controlla se è una riconnessione
+    // Controlla se è una riconnessione (giocatore con stesso nome, disconnesso o meno)
     const chiaveDisc = `${codice}_${nome}`;
-    const giocatoreDisconnesso = partita.giocatori.find(g => g.nome === nome && g.disconnesso);
+    const giocatoreEsistente = partita.giocatori.find(g => g.nome === nome);
 
-    if (giocatoreDisconnesso) {
-      giocatoreDisconnesso.id = socket.id;
-      giocatoreDisconnesso.disconnesso = false;
+    if (giocatoreEsistente && (partita.stato === 'inCorso' || partita.stato === 'fineRound' || partita.stato === 'finePartita')) {
+      const vecchioSocket = io.sockets.sockets.get(giocatoreEsistente.id);
+      if (vecchioSocket) {
+        vecchioSocket.codiceStanza = null;
+        vecchioSocket.disconnect(true);
+      }
+
+      giocatoreEsistente.id = socket.id;
+      giocatoreEsistente.disconnesso = false;
 
       if (disconnessioniPendenti.has(chiaveDisc)) {
         clearTimeout(disconnessioniPendenti.get(chiaveDisc));

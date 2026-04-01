@@ -35,7 +35,14 @@ function getImmagineCarta(valore, seme) {
 // Stato locale
 let statoGioco = null;
 let cartaSelezionata = null;
-let sessioneCorrente = null;
+// Sessione persistente per riconnessione
+function getSessione() {
+  try { return JSON.parse(sessionStorage.getItem('sessioneCorrente')); } catch { return null; }
+}
+function setSessione(s) {
+  if (s) sessionStorage.setItem('sessioneCorrente', JSON.stringify(s));
+  else sessionStorage.removeItem('sessioneCorrente');
+}
 let carteSelezionateTavolo = [];
 let combinazioniDisponibili = [];
 let puoiPosare = false;
@@ -372,7 +379,7 @@ document.getElementById('btnCreaStanza').addEventListener('click', () => {
     return;
   }
   const puntiVittoria = parseInt(document.getElementById('puntiVittoria').value);
-  sessioneCorrente = { nome };
+  setSessione({ nome });
   socket.emit('creaStanza', { nome, puntiVittoria });
 });
 
@@ -389,7 +396,7 @@ document.getElementById('btnUnisciti').addEventListener('click', () => {
     return;
   }
 
-  sessioneCorrente = { codice, nome };
+  setSessione({ codice, nome });
   socket.emit('uniscitiStanza', { codice, nome });
 });
 
@@ -472,7 +479,7 @@ document.getElementById('btnNuovaPartita').addEventListener('click', () => {
 
 // Socket events
 socket.on('stanzaCreata', ({ codice, nome }) => {
-  if (sessioneCorrente) sessioneCorrente.codice = codice;
+  const s = getSessione(); if (s) { s.codice = codice; setSessione(s); }
   document.getElementById('codiceStanzaDisplay').textContent = codice;
   mostraSchermata('attesa');
 });
@@ -662,12 +669,13 @@ socket.on('giocatoreRiconnesso', ({ nome }) => {
 
 socket.on('avversarioAbbandonato', ({ nome }) => {
   mostraMessaggio(`${nome} ha abbandonato la partita`, 'errore');
-  sessioneCorrente = null;
+  setSessione(null);
   setTimeout(() => mostraSchermata('lobby'), 3000);
 });
 
 socket.on('connect', () => {
-  if (sessioneCorrente && sessioneCorrente.codice && sessioneCorrente.nome) {
-    socket.emit('uniscitiStanza', { codice: sessioneCorrente.codice, nome: sessioneCorrente.nome });
+  const sess = getSessione();
+  if (sess && sess.codice && sess.nome) {
+    socket.emit('uniscitiStanza', { codice: sess.codice, nome: sess.nome });
   }
 });
