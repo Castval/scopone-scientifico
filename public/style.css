@@ -791,3 +791,107 @@ body {
     height: 96px;
   }
 }
+
+/* === AUTH/ADMIN/TORNEO/PRIVACY === */
+#auth { text-align: center; padding-top: 40px; }
+#auth h1 { font-size: 3.5em; margin-bottom: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); color: #d4af37; }
+#auth .sottotitolo { color: #8bc48b; margin-bottom: 30px; }
+.auth-form { max-width: 320px; margin: 0 auto; }
+.auth-form h2 { color: #d4af37; margin-bottom: 20px; }
+.auth-form .form-gruppo { margin: 12px auto; }
+.auth-form .form-gruppo input { width: 100%; }
+.auth-form .btn-primario { width: 100%; margin-top: 10px; }
+.auth-switch { margin-top: 15px; font-size: 0.9em; color: #8bc48b; }
+.auth-switch a { color: #d4af37; text-decoration: none; }
+.nascosto { display: none !important; }
+#messaggioAuth { margin-top: 15px; display: none; }
+.auth-info { color: #ffc107; font-size: 0.9em; margin-bottom: 15px; }
+.auth-footer { margin-top: 20px; font-size: 0.8em; }
+.auth-footer a { color: #8bc48b; }
+.gdpr-checkbox { display: flex; align-items: center; gap: 8px; font-size: 0.85em; color: #ccc; cursor: pointer; margin: 10px auto; max-width: 320px; text-align: left; }
+.gdpr-checkbox input { cursor: pointer; min-width: 18px; min-height: 18px; }
+.gdpr-checkbox a { color: #d4af37; }
+.user-bar { display: flex; align-items: center; justify-content: center; gap: 15px; background: rgba(255,255,255,0.08); border-radius: 10px; padding: 12px 20px; margin-bottom: 20px; max-width: 500px; margin-left: auto; margin-right: auto; flex-wrap: wrap; }
+.user-bar #userNome { font-weight: bold; color: #d4af37; font-size: 1.1em; }
+.user-stats { font-size: 0.85em; color: #8bc48b; }
+.btn-logout { background: rgba(220,53,69,0.6); border: none; color: #fff; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 0.85em; }
+.btn-elimina-account { background: none; border: none; color: #888; padding: 6px 10px; cursor: pointer; font-size: 0.75em; text-decoration: underline; }
+.btn-admin { background: rgba(138,43,226,0.6); border: none; color: #fff; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 0.85em; }
+.pannello-admin { max-width: 600px; margin: 0 auto 20px; padding: 20px; background: rgba(138,43,226,0.1); border: 1px solid rgba(138,43,226,0.3); border-radius: 12px; text-align: left; }
+.pannello-admin h3 { color: #bb86fc; text-align: center; margin-bottom: 15px; }
+.btn-refresh-admin { display: block; margin: 0 auto 15px; padding: 6px 16px; font-size: 0.85em; }
+.admin-sezione { margin-bottom: 15px; }
+.admin-sezione h4 { color: #bb86fc; margin-bottom: 8px; }
+.admin-lista { font-size: 0.9em; }
+.admin-utente { display: flex; justify-content: space-between; align-items: center; padding: 6px 12px; background: rgba(255,255,255,0.05); border-radius: 6px; margin-bottom: 4px; gap: 8px; flex-wrap: wrap; }
+.admin-utente .nome { color: #e0e0e0; }
+.admin-utente .stato { font-size: 0.8em; color: #8bc48b; }
+.admin-email { font-size: 0.8em; color: #888; flex: 1; }
+.admin-ip { font-size: 0.75em; color: #666; font-family: monospace; }
+.btn-reset-pwd { padding: 3px 10px; font-size: 0.75em; border: none; border-radius: 4px; background: rgba(255,193,7,0.3); color: #ffc107; cursor: pointer; }
+.btn-cancella-utente { padding: 3px 10px; font-size: 0.75em; border: none; border-radius: 4px; background: rgba(220,53,69,0.3); color: #ef5350; cursor: pointer; }
+.admin-lista-vuota { color: #888; font-style: italic; padding: 8px; }
+.admin-stanza { padding: 6px 12px; background: rgba(255,255,255,0.05); border-radius: 6px; margin-bottom: 4px; font-size: 0.85em; }
+.admin-torneo-form { display: flex; flex-direction: column; gap: 8px; }
+.admin-torneo-row { display: flex; gap: 8px; }
+.admin-torneo-row input, .admin-torneo-row select { flex: 1; padding: 8px; border-radius: 6px; border: none; font-size: 0.85em; }
+.admin-toggle { display: flex; align-items: center; gap: 8px; font-size: 0.85em; color: #ccc; cursor: pointer; }
+.admin-torneo-attivo { margin-top: 8px; font-size: 0.85em; }
+.admin-torneo-info { color: #8bc48b; margin-bottom: 5px; }
+.btn-piccolo { padding: 8px 16px; font-size: 13px; }
+.sezione-classifica { margin-top: 25px; padding: 20px; background: rgba(0,0,0,0.3); border-radius: 12px; max-width: 500px; margin-left: auto; margin-right: auto; }
+.sezione-classifica h3 { text-align: center; color: #d4af37; margin-bottom: 15px; cursor: pointer; }
+.sezione-classifica h3::after { content: ' \25BC'; font-size: 0.7em; }
+.sezione-classifica.chiusa h3::after { content: ' \25B6'; }
+.sezione-classifica.chiusa .classifica-contenuto { display: none; }
+#tabellaClassifica { width: 100%; border-collapse: collapse; font-size: 0.9em; }
+#tabellaClassifica th { color: #d4af37; padding: 8px 6px; border-bottom: 1px solid rgba(255,255,255,0.2); text-align: center; }
+#tabellaClassifica td { padding: 7px 6px; text-align: center; }
+#tabellaClassifica tr.utente-corrente td { color: #d4af37; font-weight: bold; }
+.nome-col { text-align: left !important; }
+.btn-torneo { background: linear-gradient(135deg, #e91e63, #c2185b); color: #fff; font-weight: bold; padding: 12px 30px; font-size: 16px; border: none; border-radius: 8px; cursor: pointer; margin: 5px; }
+.torneo-header { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; }
+.torneo-header h2 { color: #d4af37; flex: 1; text-align: center; margin-right: 80px; }
+#torneoScreen, #tabelloneScreen { padding: 20px; }
+.torneo-info { text-align: center; margin-bottom: 20px; }
+.torneo-info h3 { color: #d4af37; font-size: 1.5em; }
+.torneo-info p { color: #8bc48b; }
+.torneo-progress { margin: 15px auto; max-width: 400px; }
+.torneo-progress-bar { background: rgba(255,255,255,0.1); border-radius: 8px; height: 24px; overflow: hidden; }
+.torneo-progress-fill { background: linear-gradient(135deg, #e91e63, #d4af37); height: 100%; border-radius: 8px; }
+.torneo-progress-text { text-align: center; margin-top: 5px; font-size: 0.9em; color: #ccc; }
+.torneo-squadre-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; max-width: 600px; margin: 20px auto; }
+.torneo-squadra-card { background: rgba(255,255,255,0.08); border-radius: 8px; padding: 12px; text-align: center; }
+.torneo-squadra-card h4 { color: #d4af37; font-size: 0.9em; margin-bottom: 6px; }
+.torneo-squadra-card .slot-vuoto { color: #666; font-style: italic; }
+.btn-unisciti-squadra { width: 100%; margin-top: 6px; padding: 6px; font-size: 0.8em; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; background: linear-gradient(135deg, #d4af37, #b8962e); color: #1a2a1a; }
+.torneo-btns { text-align: center; margin-top: 20px; }
+.torneo-nessuno { text-align: center; color: #888; padding: 60px 20px; font-size: 1.1em; }
+.tabellone-wrapper { overflow-x: auto; padding: 10px 0; }
+.tabellone { display: flex; gap: 30px; min-width: max-content; align-items: center; padding: 20px; }
+.tabellone-round { display: flex; flex-direction: column; justify-content: center; }
+.tabellone-round-title { text-align: center; color: #d4af37; font-weight: bold; font-size: 0.85em; margin-bottom: 10px; text-transform: uppercase; }
+.tabellone-match { background: rgba(255,255,255,0.06); border-radius: 8px; padding: 8px 12px; min-width: 150px; border-left: 3px solid transparent; }
+.tabellone-match.in-corso { border-left-color: #4caf50; }
+.tabellone-match.completata { border-left-color: #d4af37; }
+.tabellone-match.attesa { border-left-color: #666; }
+.tabellone-team { padding: 4px 0; font-size: 0.85em; color: #ccc; }
+.tabellone-team.vincitore { color: #d4af37; font-weight: bold; }
+.tabellone-team.tbd { color: #555; font-style: italic; }
+.tabellone-connector { width: 30px; }
+.tabellone-vai-btn { display: block; margin-top: 5px; padding: 4px 8px; font-size: 0.75em; background: #4caf50; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+.torneo-attesa-msg { text-align: center; padding: 20px; margin-top: 20px; background: rgba(255,193,7,0.1); border: 1px solid rgba(255,193,7,0.3); border-radius: 10px; color: #ffc107; font-weight: bold; animation: pulse-attesa 2s ease-in-out infinite; }
+@keyframes pulse-attesa { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+.torneo-vittoria { text-align: center; padding: 40px 20px; }
+.torneo-vittoria-trofeo { font-size: 5em; margin-bottom: 15px; animation: trofeo-bounce 1s ease-in-out infinite alternate; }
+@keyframes trofeo-bounce { 0% { transform: translateY(0) scale(1); } 100% { transform: translateY(-15px) scale(1.1); } }
+.torneo-vittoria h1 { color: #d4af37; font-size: 2em; margin-bottom: 10px; }
+.torneo-vittoria p { color: #8bc48b; margin-bottom: 25px; }
+.privacy-page { max-width: 700px; margin: 0 auto; padding: 20px; text-align: left; line-height: 1.7; font-size: 0.9em; }
+.privacy-page h2 { color: #d4af37; text-align: center; margin-bottom: 5px; }
+.privacy-data { text-align: center; color: #888; font-size: 0.85em; margin-bottom: 20px; }
+.privacy-page h3 { color: #8bc48b; margin-top: 18px; margin-bottom: 6px; }
+.privacy-page ul { margin-left: 20px; margin-bottom: 10px; }
+.storage-banner { position: fixed; bottom: 0; left: 0; right: 0; z-index: 9999; background: rgba(0,0,0,0.95); border-top: 1px solid rgba(212,175,55,0.3); padding: 15px 20px; display: flex; align-items: center; justify-content: center; gap: 15px; font-size: 0.85em; color: #ccc; }
+.storage-banner p { margin: 0; flex: 1; max-width: 600px; }
+.storage-banner a { color: #d4af37; }

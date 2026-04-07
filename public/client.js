@@ -2,6 +2,16 @@
 
 const socket = io();
 
+window.addEventListener('beforeunload', (e) => { if (getSessione()) { e.preventDefault(); e.returnValue = ''; } });
+history.pushState(null, '', location.href);
+window.addEventListener('popstate', () => { history.pushState(null, '', location.href); });
+
+let utenteLoggato = null;
+let isAdmin = false;
+function getUtenteLoggato() { try { return JSON.parse(localStorage.getItem('utenteLoggato')); } catch { return null; } }
+function setUtenteLoggato(nome) { if (nome) { utenteLoggato = nome; localStorage.setItem('utenteLoggato', JSON.stringify(nome)); } else { utenteLoggato = null; localStorage.removeItem('utenteLoggato'); } }
+function getNomeUtente() { return utenteLoggato || ''; }
+
 // Mapping per i nomi dei file delle carte
 const NOMI_VALORI = {
   1: 'Asso',
@@ -49,6 +59,10 @@ let puoiPosare = false;
 
 // Elementi DOM
 const schermate = {
+  auth: document.getElementById('auth'),
+  torneo: document.getElementById('torneoScreen'),
+  tabellone: document.getElementById('tabelloneScreen'),
+  privacy: document.getElementById('privacyScreen'),
   lobby: document.getElementById('lobby'),
   attesa: document.getElementById('attesa'),
   gioco: document.getElementById('gioco'),
@@ -373,7 +387,7 @@ document.querySelector('.sezione-regole h3')?.addEventListener('click', () => {
 
 // Event listeners
 document.getElementById('btnCreaStanza').addEventListener('click', () => {
-  const nome = document.getElementById('nomeGiocatore').value.trim();
+  const nome = getNomeUtente();
   if (!nome) {
     mostraMessaggio('Inserisci il tuo nome', 'errore');
     return;
@@ -384,7 +398,7 @@ document.getElementById('btnCreaStanza').addEventListener('click', () => {
 });
 
 document.getElementById('btnUnisciti').addEventListener('click', () => {
-  const nome = document.getElementById('nomeGiocatore').value.trim();
+  const nome = getNomeUtente();
   const codice = document.getElementById('codiceStanza').value.trim().toUpperCase();
 
   if (!nome) {
@@ -660,22 +674,84 @@ function renderizzaMiniCarte(elementId, carte, mostraPunti = false) {
 }
 
 socket.on('avversarioDisconnesso', ({ nome, timeout }) => {
-  mostraMessaggio(`${nome} si è disconnesso. Attendo riconnessione (${timeout}s)...`, 'info');
+  const msg = document.getElementById('messaggioGioco');
+  msg.textContent = `${nome} si e' disconnesso. Attendo riconnessione (${timeout}s)...`;
+  msg.className = 'messaggio info';
 });
-
 socket.on('giocatoreRiconnesso', ({ nome }) => {
-  mostraMessaggio(`${nome} si è riconnesso!`, 'successo');
+  const msg = document.getElementById('messaggioGioco');
+  msg.textContent = `${nome} si e' riconnesso!`;
+  msg.className = 'messaggio successo';
+  setTimeout(() => { msg.textContent = ''; msg.className = 'messaggio'; }, 3000);
 });
-
 socket.on('avversarioAbbandonato', ({ nome }) => {
   mostraMessaggio(`${nome} ha abbandonato la partita`, 'errore');
-  setSessione(null);
+  setSessione(null); partitaTorneoCorrente = false;
   setTimeout(() => mostraSchermata('lobby'), 3000);
 });
 
+Object.defineProperty(window, 'statoGioco', { get() { return statoGioco; } });
+Object.defineProperty(window, 'socket', { get() { return socket; } });
+
+// --- AUTH/ADMIN/TORNEO (identico a scopa) ---
+function mostraMessaggioAuth(testo, tipo = 'errore') { const el = document.getElementById('messaggioAuth'); el.textContent = testo; el.className = 'messaggio ' + tipo; el.style.display = 'inline-block'; setTimeout(() => { el.style.display = 'none'; }, 4000); }
+let privacyReturnScreen = 'auth';
+function mostraPrivacy(ret) { privacyReturnScreen = ret || 'auth'; mostraSchermata('privacy'); }
+document.getElementById('btnPrivacyIndietro').addEventListener('click', () => mostraSchermata(privacyReturnScreen));
+document.getElementById('linkPrivacyAuth')?.addEventListener('click', (e) => { e.preventDefault(); mostraPrivacy('auth'); });
+document.getElementById('linkPrivacyReg')?.addEventListener('click', (e) => { e.preventDefault(); mostraPrivacy('auth'); });
+document.getElementById('linkPrivacyBanner')?.addEventListener('click', (e) => { e.preventDefault(); document.getElementById('storageBanner').classList.add('nascosto'); mostraPrivacy(privacyReturnScreen); });
+if (!localStorage.getItem('storageAccettato')) document.getElementById('storageBanner').classList.remove('nascosto');
+document.getElementById('btnAccettaStorage').addEventListener('click', () => { localStorage.setItem('storageAccettato', '1'); document.getElementById('storageBanner').classList.add('nascosto'); });
+document.getElementById('mostraRegistra').addEventListener('click', (e) => { e.preventDefault(); document.getElementById('authLogin').classList.add('nascosto'); document.getElementById('authRegistra').classList.remove('nascosto'); });
+document.getElementById('mostraLogin').addEventListener('click', (e) => { e.preventDefault(); document.getElementById('authRegistra').classList.add('nascosto'); document.getElementById('authLogin').classList.remove('nascosto'); });
+function mostraCambioPassword() { document.getElementById('authLogin').classList.add('nascosto'); document.getElementById('authRegistra').classList.add('nascosto'); document.getElementById('authCambioPwd').classList.remove('nascosto'); }
+document.getElementById('btnCambiaPwd').addEventListener('click', async () => { const n = document.getElementById('nuovaPassword').value, c = document.getElementById('confermaNuovaPassword').value; if (!n||!c) { mostraMessaggioAuth('Compila tutti i campi'); return; } if (n!==c) { mostraMessaggioAuth('Le password non coincidono'); return; } const r = await (await fetch('/api/cambiapassword', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ nome:getNomeUtente(), nuovaPassword:n }) })).json(); if (!r.ok) { mostraMessaggioAuth(r.errore); return; } document.getElementById('authCambioPwd').classList.add('nascosto'); entraInLobby(); });
+document.getElementById('confermaNuovaPassword').addEventListener('keydown', (e) => { if (e.key==='Enter') document.getElementById('btnCambiaPwd').click(); });
+document.getElementById('loginPassword').addEventListener('keydown', (e) => { if (e.key==='Enter') document.getElementById('btnLogin').click(); });
+document.getElementById('btnLogin').addEventListener('click', async () => { const nome=document.getElementById('loginNome').value.trim(), pwd=document.getElementById('loginPassword').value; if (!nome||!pwd) { mostraMessaggioAuth('Compila tutti i campi'); return; } const d = await (await fetch('/api/login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ nome, password:pwd }) })).json(); if (!d.ok) { mostraMessaggioAuth(d.errore); return; } isAdmin=d.admin||false; setUtenteLoggato(d.nome); if (d.passwordTemporanea) mostraCambioPassword(); else entraInLobby(); });
+document.getElementById('btnRegistra').addEventListener('click', async () => { const nome=document.getElementById('regNome').value.trim(), email=document.getElementById('regEmail').value.trim(), pwd=document.getElementById('regPassword').value; if (!nome||!email||!pwd) { mostraMessaggioAuth('Compila tutti i campi'); return; } if (!document.getElementById('regConsensoPrv').checked) { mostraMessaggioAuth("Devi accettare l'informativa"); return; } const d = await (await fetch('/api/registra', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ nome, email, password:pwd }) })).json(); if (!d.ok) { mostraMessaggioAuth(d.errore); return; } mostraMessaggioAuth('Registrazione completata!', 'successo'); document.getElementById('authRegistra').classList.add('nascosto'); document.getElementById('authLogin').classList.remove('nascosto'); document.getElementById('loginNome').value=nome; });
+document.getElementById('btnEliminaAccount').addEventListener('click', async () => { if (!confirm('Eliminare il tuo account?')) return; if (!confirm('Confermi?')) return; const d = await (await fetch('/api/eliminaaccount', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ nome:getNomeUtente() }) })).json(); if (d.ok) { setUtenteLoggato(null); setSessione(null); mostraSchermata('auth'); mostraMessaggioAuth('Account eliminato','successo'); } });
+document.getElementById('btnLogout').addEventListener('click', () => { setUtenteLoggato(null); setSessione(null); mostraSchermata('auth'); });
+
+async function entraInLobby() { document.getElementById('userNome').textContent=getNomeUtente(); socket.emit('autenticato',{nome:getNomeUtente()}); try { const d=await(await fetch(`/api/stats/${encodeURIComponent(getNomeUtente())}`)).json(); if(d.ok){const s=d.stats;const t=s.tornei_giocati>0?` | Tornei: ${s.tornei_vinti}/${s.tornei_giocati}`:''; document.getElementById('userStats').innerHTML=`${s.partite_giocate} partite | ${s.partite_vinte}V ${s.partite_perse}P | ${s.punti} pt${t}`;} } catch{} if(isAdmin) document.getElementById('btnAdmin').classList.remove('nascosto'); else { document.getElementById('btnAdmin').classList.add('nascosto'); document.getElementById('pannelloAdmin').classList.add('nascosto'); } caricaClassifica(); mostraSchermata('lobby'); }
+async function caricaClassifica() { try { const d=await(await fetch('/api/classifica')).json(); const body=document.getElementById('classificaBody'); body.innerHTML=''; if(!d.ok||d.classifica.length===0){body.innerHTML='<tr><td colspan="6">Nessuno</td></tr>';return;} d.classifica.forEach((g,i)=>{const tr=document.createElement('tr');if(g.nome===getNomeUtente())tr.className='utente-corrente';const t=g.tornei_vinti>0?`${g.tornei_vinti}/${g.tornei_giocati}`:'-';tr.innerHTML=`<td>${i+1}</td><td class="nome-col">${g.nome}</td><td>${g.partite_vinte}</td><td>${g.partite_perse}</td><td><strong>${g.punti}</strong></td><td>${t}</td>`;body.appendChild(tr);}); } catch{} }
+document.getElementById('toggleClassifica')?.addEventListener('click', () => document.querySelector('.sezione-classifica').classList.toggle('chiusa'));
+
+document.getElementById('btnAdmin').addEventListener('click', () => { const p=document.getElementById('pannelloAdmin'); if(p.classList.contains('nascosto')){p.classList.remove('nascosto');caricaDatiAdmin();}else p.classList.add('nascosto'); });
+document.getElementById('btnRefreshAdmin').addEventListener('click', caricaDatiAdmin);
+async function caricaDatiAdmin() {
+  try{const d=await(await fetch(`/api/admin/online?nome=${encodeURIComponent(getNomeUtente())}`)).json();if(!d.ok)return;document.getElementById('adminOnlineCount').textContent=d.utentiOnline.length;document.getElementById('adminUtentiOnline').innerHTML=d.utentiOnline.length===0?'<div class="admin-lista-vuota">Nessuno</div>':d.utentiOnline.map(u=>`<div class="admin-utente"><span class="nome">${u.nome}</span><span class="admin-ip">${u.ip||'?'}</span><span class="stato ${u.stanza?'in-stanza':''}">${u.stanza?'Stanza '+u.stanza:'Lobby'}</span></div>`).join('');document.getElementById('adminStanzeCount').textContent=d.stanze.length;document.getElementById('adminStanze').innerHTML=d.stanze.length===0?'<div class="admin-lista-vuota">Nessuna</div>':d.stanze.map(s=>`<div class="admin-stanza"><span>${s.codice}</span> <span>${s.stato}</span> <span>${s.giocatori.map(g=>g.nome).join(', ')}</span></div>`).join('');}catch{}
+  try{const d=await(await fetch(`/api/admin/utenti?nome=${encodeURIComponent(getNomeUtente())}`)).json();if(!d.ok)return;const el=document.getElementById('adminUtentiRegistrati');document.getElementById('adminUtentiCount').textContent=d.utenti.length;el.innerHTML=d.utenti.map(u=>`<div class="admin-utente"><span class="nome">${u.nome}</span><span class="admin-email">${u.email}</span><button class="btn-reset-pwd" data-nome="${u.nome}">Reset pwd</button><button class="btn-cancella-utente" data-nome="${u.nome}">Cancella</button></div>`).join('');el.querySelectorAll('.btn-reset-pwd').forEach(b=>b.addEventListener('click',async(e)=>{const n=e.target.dataset.nome;if(!confirm(`Reset password di ${n}?`))return;const r=await(await fetch('/api/admin/resetpassword',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({admin:getNomeUtente(),nome:n})})).json();if(r.ok)alert(`Password: ${r.passwordTemporanea}`);}));el.querySelectorAll('.btn-cancella-utente').forEach(b=>b.addEventListener('click',async(e)=>{const n=e.target.dataset.nome;if(!confirm(`Cancellare ${n}?`))return;const r=await(await fetch('/api/admin/cancellautente',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({admin:getNomeUtente(),nome:n})})).json();if(r.ok)caricaDatiAdmin();else alert(r.errore);}));}catch{}
+  try{const d=await(await fetch('/api/torneo/attivo')).json();const el=document.getElementById('adminTorneoAttivo');if(d.ok&&d.torneo)el.innerHTML=`<div class="admin-torneo-info">Attivo: <strong>${d.torneo.nome}</strong> (${d.torneo.stato})</div><button class="btn-reset-pwd" onclick="annullaTorneoFn(${d.torneo.id})">Annulla</button>`;else el.innerHTML='<div class="admin-torneo-info">Nessun torneo</div>';}catch{}
+}
+document.getElementById('btnCreaTorneo')?.addEventListener('click', async()=>{const nome=document.getElementById('adminTorneoNome').value.trim();if(!nome){alert('Nome torneo');return;}const num=parseInt(document.getElementById('adminTorneoGiocatori').value);const[mod,val]=document.getElementById('adminTorneoModalita').value.split('_');const ip=document.getElementById('adminTorneoIp').checked;const d=await(await fetch('/api/admin/torneo/crea',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({admin:getNomeUtente(),nome,numGiocatori:num,modalitaVittoria:mod,valoreVittoria:parseInt(val),controlloIp:ip})})).json();if(d.ok){document.getElementById('adminTorneoNome').value='';caricaDatiAdmin();alert('Torneo creato!');}else alert(d.errore);});
+window.annullaTorneoFn=async function(id){if(!confirm('Annullare?'))return;await fetch('/api/admin/torneo/annulla',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({admin:getNomeUtente(),torneoId:id})});caricaDatiAdmin();};
+
+let torneoCorrenteId=null;let partitaTorneoCorrente=false;
+document.getElementById('btnVaiTorneo').addEventListener('click',caricaTorneo);
+document.getElementById('btnTorneoIndietro').addEventListener('click',()=>mostraSchermata('lobby'));
+document.getElementById('btnTabelloneIndietro').addEventListener('click',()=>{if(partitaTorneoCorrente&&statoGioco)mostraSchermata('gioco');else if(torneoCorrenteId)caricaTorneo();else mostraSchermata('lobby');});
+async function caricaTorneo(){const d=await(await fetch('/api/torneo/attivo')).json();const c=document.getElementById('torneoContenuto');if(!d.ok||!d.torneo){c.innerHTML='<div class="torneo-nessuno">Nessun torneo disponibile</div>';document.getElementById('torneoTitolo').textContent='Torneo';mostraSchermata('torneo');return;}const t=d.torneo;torneoCorrenteId=t.id;if(t.stato==='iscrizioni'){await renderIscrizioni(t);mostraSchermata('torneo');}else caricaTabellone(t.id);}
+async function renderIscrizioni(t){const c=document.getElementById('torneoContenuto');document.getElementById('torneoTitolo').textContent=t.nome;const isI=t.squadre.some(sq=>sq.giocatori.includes(getNomeUtente()));const pct=Math.round((t.iscritti/t.numGiocatori)*100);let html=`<div class="torneo-info"><h3>${t.nome}</h3><p>${t.numSquadre} giocatori</p></div><div class="torneo-progress"><div class="torneo-progress-bar"><div class="torneo-progress-fill" style="width:${pct}%"></div></div><div class="torneo-progress-text">${t.iscritti}/${t.numGiocatori} iscritti</div></div><div class="torneo-btns">${isI?`<button class="btn-secondario" onclick="lasciaFnTorneo(${t.id})">Ritirati</button>`:''}</div><div class="torneo-squadre-grid">`;for(const sq of t.squadre){html+=`<div class="torneo-squadra-card"><h4>Slot ${sq.numero+1}</h4>`;if(sq.giocatori[0]){const me=sq.giocatori[0]===getNomeUtente();html+=`<p${me?' style="color:#d4af37;font-weight:bold"':''}>${sq.giocatori[0]}</p>`;}else if(!isI)html+=`<button class="btn-unisciti-squadra" onclick="iscrivitiFnTorneo(${t.id},${sq.numero})">Unisciti</button>`;else html+=`<p class="slot-vuoto">- vuoto -</p>`;html+=`</div>`;}html+=`</div>`;c.innerHTML=html;}
+window.iscrivitiFnTorneo=async function(id,sq){const d=await(await fetch('/api/torneo/iscriviti',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({torneoId:id,nome:getNomeUtente(),numeroSquadra:sq})})).json();if(!d.ok)mostraMessaggio(d.errore,'errore');caricaTorneo();};
+window.lasciaFnTorneo=async function(id){await fetch('/api/torneo/lascia',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({torneoId:id,nome:getNomeUtente()})});caricaTorneo();};
+async function caricaTabellone(id){const d=await(await fetch(`/api/torneo/${id}/tabellone`)).json();if(!d.ok)return;renderTabellone(d.torneo);mostraSchermata('tabellone');}
+function renderTabellone(t){document.getElementById('tabelloneTitolo').textContent=t.nome;const c=document.getElementById('tabelloneContenuto');const nome=getNomeUtente();let myId=null;for(const[id,sq]of Object.entries(t.squadre)){if(sq.giocatori?.includes(nome)){myId=parseInt(id);break;}}let html='<div class="tabellone">';for(let ri=0;ri<t.rounds.length;ri++){const r=t.rounds[ri];const gap=20*Math.pow(2,ri);html+=`<div class="tabellone-round"><div class="tabellone-round-title">${r.nome}</div>`;for(const m of r.partite){const nA=m.squadraA?m.squadraA.giocatori.join(', ')||m.squadraA.nome:'TBD';const nB=m.squadraB?m.squadraB.giocatori.join(', ')||m.squadraB.nome:'TBD';const isMy=(m.squadraA?.id===myId)||(m.squadraB?.id===myId);const clsA=m.vincitore===m.squadraA?.id?'vincitore':(!m.squadraA?'tbd':'');const clsB=m.vincitore===m.squadraB?.id?'vincitore':(!m.squadraB?'tbd':'');html+=`<div class="tabellone-match ${m.stato}" style="margin-bottom:${gap}px;${isMy?'box-shadow:0 0 8px rgba(233,30,99,0.5);':''}"><div class="tabellone-team ${clsA}"><span>${nA}</span></div><div class="tabellone-team ${clsB}"><span>${nB}</span></div>`;if(isMy&&m.codiceStanza&&m.stato==='inCorso')html+=`<button class="tabellone-vai-btn" onclick="uniscitiPartitaTorneoFn('${m.codiceStanza}')">Vai alla partita</button>`;html+=`</div>`;}html+=`</div>`;if(ri<t.rounds.length-1)html+=`<div class="tabellone-connector"></div>`;}html+=`</div>`;if(t.stato==='completato'&&t.squadraVincitrice)html+=`<div style="text-align:center;margin-top:20px"><h2 style="color:#d4af37">Vincitore: ${t.squadraVincitrice.giocatori.join(', ')}</h2></div>`;if(t.stato==='inCorso'&&myId){let att=false;for(const r of t.rounds)for(const m of r.partite){if(m.stato==='attesa'&&((m.squadraA?.id===myId&&!m.squadraB)||(m.squadraB?.id===myId&&!m.squadraA)))att=true;}if(att)html+=`<div class="torneo-attesa-msg">In attesa degli avversari...</div>`;}c.innerHTML=html;}
+function mostraVittoriaTorneo(){document.getElementById('tabelloneContenuto').innerHTML=`<div class="torneo-vittoria"><div class="torneo-vittoria-trofeo">&#127942;</div><h1>Hai vinto il torneo!</h1><p>Congratulazioni!</p><button class="btn-primario" onclick="torneoCorrenteId&&caricaTabellone(torneoCorrenteId)">Tabellone</button><button class="btn-secondario" style="margin-top:10px" onclick="mostraSchermata('lobby')">Lobby</button></div>`;mostraSchermata('tabellone');}
+window.uniscitiPartitaTorneoFn=function(codice){partitaTorneoCorrente=true;setSessione({codice,nome:getNomeUtente()});socket.emit('uniscitiPartitaTorneo',{codiceStanza:codice,nome:getNomeUtente()});mostraSchermata('attesa');};
+socket.on('torneoDisponibile',()=>{});
+socket.on('torneoIniziato',({torneoId})=>{torneoCorrenteId=torneoId;caricaTabellone(torneoId);});
+socket.on('torneoAggiornato',({torneoId})=>{if(schermate.tabellone.classList.contains('attiva')&&torneoCorrenteId===torneoId)caricaTabellone(torneoId);if(schermate.torneo.classList.contains('attiva')&&torneoCorrenteId===torneoId)caricaTorneo();});
+socket.on('torneoCompletato',({torneoId})=>{if(torneoCorrenteId===torneoId)caricaTabellone(torneoId);});
+socket.on('torneoPartitaPronta',({torneoId,codiceStanza})=>{torneoCorrenteId=torneoId;partitaTorneoCorrente=true;setSessione({codice:codiceStanza,nome:getNomeUtente()});socket.emit('uniscitiPartitaTorneo',{codiceStanza,nome:getNomeUtente()});mostraSchermata('attesa');});
+socket.on('torneoAnnullato',()=>{torneoCorrenteId=null;if(schermate.torneo.classList.contains('attiva')||schermate.tabellone.classList.contains('attiva')){mostraMessaggio('Torneo annullato','errore');setTimeout(()=>mostraSchermata('lobby'),2000);}});
+
+(async function(){const s=getUtenteLoggato();if(s){utenteLoggato=s;try{const d=await(await fetch(`/api/isadmin/${encodeURIComponent(s)}`)).json();isAdmin=d.ok&&d.admin;}catch{}entraInLobby();}})();
+
 socket.on('connect', () => {
   const sess = getSessione();
-  if (sess && sess.codice && sess.nome) {
+  if (sess && sess.codice && sess.nome && getUtenteLoggato()) {
     socket.emit('uniscitiStanza', { codice: sess.codice, nome: sess.nome });
   }
 });

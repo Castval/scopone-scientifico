@@ -8,14 +8,90 @@
 </head>
 <body>
   <div id="app">
-    <!-- Schermata Lobby -->
-    <div id="lobby" class="schermata attiva">
+    <!-- Auth -->
+    <div id="auth" class="schermata attiva">
       <h1>Scopone Scientifico</h1>
       <p class="sottotitolo">Gioco di carte con 40 carte napoletane - 2 giocatori</p>
+      <div id="authLogin" class="auth-form">
+        <h2>Accedi</h2>
+        <div class="form-gruppo"><input type="text" id="loginNome" placeholder="Nome utente" maxlength="20"></div>
+        <div class="form-gruppo"><input type="password" id="loginPassword" placeholder="Password"></div>
+        <button id="btnLogin" class="btn-primario">Accedi</button>
+        <p class="auth-switch">Non hai un account? <a href="#" id="mostraRegistra">Registrati</a></p>
+      </div>
+      <div id="authRegistra" class="auth-form nascosto">
+        <h2>Registrati</h2>
+        <div class="form-gruppo"><input type="text" id="regNome" placeholder="Nome utente" maxlength="20"></div>
+        <div class="form-gruppo"><input type="email" id="regEmail" placeholder="Email"></div>
+        <div class="form-gruppo"><input type="password" id="regPassword" placeholder="Password (min 4 caratteri)"></div>
+        <label class="gdpr-checkbox"><input type="checkbox" id="regConsensoPrv"> Ho letto e accetto l'<a href="#" id="linkPrivacyReg">informativa sulla privacy</a></label>
+        <button id="btnRegistra" class="btn-primario">Registrati</button>
+        <p class="auth-switch">Hai gia un account? <a href="#" id="mostraLogin">Accedi</a></p>
+      </div>
+      <div id="authCambioPwd" class="auth-form nascosto">
+        <h2>Cambia password</h2>
+        <p class="auth-info">La tua password e' temporanea, scegline una nuova.</p>
+        <div class="form-gruppo"><input type="password" id="nuovaPassword" placeholder="Nuova password (min 4 caratteri)"></div>
+        <div class="form-gruppo"><input type="password" id="confermaNuovaPassword" placeholder="Conferma nuova password"></div>
+        <button id="btnCambiaPwd" class="btn-primario">Cambia password</button>
+      </div>
+      <div id="messaggioAuth" class="messaggio"></div>
+      <p class="auth-footer"><a href="#" id="linkPrivacyAuth">Informativa sulla Privacy</a></p>
+    </div>
 
-      <div class="form-gruppo">
-        <label for="nomeGiocatore">Il tuo nome:</label>
-        <input type="text" id="nomeGiocatore" placeholder="Inserisci il tuo nome" maxlength="20">
+    <!-- Torneo -->
+    <div id="torneoScreen" class="schermata">
+      <div class="torneo-header"><button id="btnTorneoIndietro" class="btn-secondario btn-piccolo">Indietro</button><h2 id="torneoTitolo">Torneo</h2></div>
+      <div id="torneoContenuto"></div>
+    </div>
+
+    <!-- Tabellone -->
+    <div id="tabelloneScreen" class="schermata">
+      <div class="torneo-header"><button id="btnTabelloneIndietro" class="btn-secondario btn-piccolo">Indietro</button><h2 id="tabelloneTitolo">Tabellone</h2></div>
+      <div id="tabelloneContenuto" class="tabellone-wrapper"></div>
+    </div>
+
+    <!-- Privacy -->
+    <div id="privacyScreen" class="schermata">
+      <div class="privacy-page">
+        <button id="btnPrivacyIndietro" class="btn-secondario btn-piccolo">Indietro</button>
+        <h2>Informativa sulla Privacy</h2>
+        <p class="privacy-data">Ultimo aggiornamento: 6 aprile 2026</p>
+        <h3>Dati raccolti</h3>
+        <ul><li><strong>Dati di registrazione:</strong> nome utente, email, password (criptata)</li><li><strong>Dati di gioco:</strong> statistiche partite</li><li><strong>Dati tecnici:</strong> indirizzo IP (controllo anti-frode tornei)</li></ul>
+        <h3>Finalita</h3><p>Gestione account, funzionamento gioco, classifiche, prevenzione frodi.</p>
+        <h3>Base giuridica</h3><p>Consenso dell'utente (art. 6 par. 1 lett. a GDPR).</p>
+        <h3>Conservazione</h3><p>I dati vengono conservati per la durata dell'account. Alla cancellazione, tutti i dati vengono eliminati.</p>
+        <h3>Diritti</h3><p>Accesso, rettifica, cancellazione (bottone "Elimina account"), portabilita.</p>
+        <h3>Sicurezza</h3><p>Password criptate con bcrypt.</p>
+      </div>
+    </div>
+
+    <!-- Lobby -->
+    <div id="lobby" class="schermata">
+      <h1>Scopone Scientifico</h1>
+      <div id="userBar" class="user-bar">
+        <span id="userNome"></span>
+        <div id="userStats" class="user-stats"></div>
+        <button id="btnAdmin" class="btn-admin nascosto">Admin</button>
+        <button id="btnEliminaAccount" class="btn-elimina-account">Elimina account</button>
+        <button id="btnLogout" class="btn-logout">Esci</button>
+      </div>
+
+      <div id="pannelloAdmin" class="pannello-admin nascosto">
+        <h3>Pannello Admin</h3>
+        <button id="btnRefreshAdmin" class="btn-secondario btn-refresh-admin">Aggiorna</button>
+        <div class="admin-sezione"><h4>Utenti online (<span id="adminOnlineCount">0</span>)</h4><div id="adminUtentiOnline" class="admin-lista"></div></div>
+        <div class="admin-sezione"><h4>Stanze attive (<span id="adminStanzeCount">0</span>)</h4><div id="adminStanze" class="admin-lista"></div></div>
+        <div class="admin-sezione"><h4>Utenti registrati (<span id="adminUtentiCount">0</span>)</h4><div id="adminUtentiRegistrati" class="admin-lista"></div></div>
+        <div class="admin-sezione"><h4>Gestione Torneo</h4>
+          <div class="admin-torneo-form">
+            <div class="admin-torneo-row"><input type="text" id="adminTorneoNome" placeholder="Nome torneo" maxlength="40"><select id="adminTorneoGiocatori"><option value="8">8 giocatori</option><option value="16">16 giocatori</option></select></div>
+            <div class="admin-torneo-row"><select id="adminTorneoModalita"><option value="punti_21" selected>21 punti</option><option value="punti_11">11 punti</option><option value="punti_7">7 punti</option></select><button id="btnCreaTorneo" class="btn-primario btn-piccolo">Crea Torneo</button></div>
+            <div class="admin-torneo-row"><label class="admin-toggle"><input type="checkbox" id="adminTorneoIp" checked> Blocco stesso IP</label></div>
+            <div id="adminTorneoAttivo" class="admin-torneo-attivo"></div>
+          </div>
+        </div>
       </div>
 
       <div class="bottoni-lobby">
@@ -41,7 +117,18 @@
         </div>
       </div>
 
+        <div class="divisore">tornei</div>
+        <button id="btnVaiTorneo" class="btn-torneo">Torneo</button>
+      </div>
+
       <div id="messaggioLobby" class="messaggio"></div>
+
+      <div class="sezione-classifica chiusa">
+        <h3 id="toggleClassifica">Classifica</h3>
+        <div class="classifica-contenuto">
+          <table id="tabellaClassifica"><thead><tr><th>#</th><th>Giocatore</th><th>V</th><th>P</th><th>Punti</th><th>Tornei</th></tr></thead><tbody id="classificaBody"></tbody></table>
+        </div>
+      </div>
 
       <div class="sezione-regole">
         <h3>Regole</h3>
@@ -171,6 +258,10 @@
     </div>
   </div>
 
+  <div id="storageBanner" class="storage-banner nascosto">
+    <p>Questo sito utilizza localStorage per il funzionamento del gioco. <a href="#" id="linkPrivacyBanner">Informativa Privacy</a></p>
+    <button id="btnAccettaStorage" class="btn-primario btn-piccolo">Accetto</button>
+  </div>
   <script src="/socket.io/socket.io.js"></script>
   <script src="client.js"></script>
 </body>
