@@ -672,16 +672,21 @@ function renderizzaMiniCarte(elementId, carte, mostraPunti = false) {
   }
 }
 
-socket.on('avversarioDisconnesso', ({ nome, timeout }) => {
+const giocatoriDisconnessi = new Set();
+function aggiornaMsgDisconnessi() {
   const msg = document.getElementById('messaggioGioco');
-  msg.textContent = `${nome} si e' disconnesso. Attendo riconnessione (${timeout}s)...`;
+  if (giocatoriDisconnessi.size === 0) { msg.textContent = ''; msg.className = 'messaggio'; return; }
+  msg.textContent = `${[...giocatoriDisconnessi].join(', ')} disconness${giocatoriDisconnessi.size > 1 ? 'i' : 'o'}, attendo riconnessione...`;
   msg.className = 'messaggio info';
-});
+}
+socket.on('avversarioDisconnesso', ({ nome }) => { giocatoriDisconnessi.add(nome); aggiornaMsgDisconnessi(); });
 socket.on('giocatoreRiconnesso', ({ nome }) => {
-  const msg = document.getElementById('messaggioGioco');
-  msg.textContent = `${nome} si e' riconnesso!`;
-  msg.className = 'messaggio successo';
-  setTimeout(() => { msg.textContent = ''; msg.className = 'messaggio'; }, 3000);
+  giocatoriDisconnessi.delete(nome);
+  if (giocatoriDisconnessi.size === 0) {
+    const msg = document.getElementById('messaggioGioco');
+    msg.textContent = `${nome} si e' riconnesso!`; msg.className = 'messaggio successo';
+    setTimeout(() => { msg.textContent = ''; msg.className = 'messaggio'; }, 3000);
+  } else aggiornaMsgDisconnessi();
 });
 socket.on('avversarioAbbandonato', ({ nome }) => {
   mostraMessaggio(`${nome} ha abbandonato la partita`, 'errore');
@@ -713,6 +718,8 @@ socket.on('chatLobbyMessaggio', (msg) => aggiungiMessaggioChatLobby(msg));
 socket.on('chatLobbyStoria', (msgs) => { const cont=document.getElementById('chatLobbyMessaggi'); if(!cont) return; cont.innerHTML=''; msgs.forEach(aggiungiMessaggioChatLobby); });
 
 // --- AMICI ---
+let caricaAmiciTimer = null;
+function caricaAmiciDebounced() { if (caricaAmiciTimer) clearTimeout(caricaAmiciTimer); caricaAmiciTimer = setTimeout(() => { caricaAmici(); caricaAmiciTimer = null; }, 300); }
 async function caricaAmici() {
   const nome = getNomeUtente(); if (!nome) return;
   try {
@@ -732,8 +739,8 @@ async function caricaAmici() {
 }
 document.getElementById('btnAggiungiAmico')?.addEventListener('click', async () => { const inp=document.getElementById('amiciNomeInput'); const a=inp.value.trim(); if(!a) return; const r=await(await fetch('/api/amici/richiedi',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({utente:getNomeUtente(),amico:a})})).json(); if(!r.ok){mostraMessaggio(r.errore,'errore');return;} inp.value=''; mostraMessaggio(r.accettato?'Ora siete amici!':'Richiesta inviata','successo'); caricaAmici(); });
 document.getElementById('toggleAmici')?.addEventListener('click', () => document.querySelector('.sezione-amici').classList.toggle('chiusa'));
-socket.on('richiestaAmicizia', ({ da }) => { mostraMessaggio(`${da} ti ha inviato una richiesta`,'info'); if(Notification.permission==='granted'&&document.hidden) try{new Notification('Scopone',{body:`${da} ti ha inviato una richiesta`});}catch(e){} caricaAmici(); });
-socket.on('amiciziaAccettata', ({ da }) => { mostraMessaggio(`${da} ha accettato!`,'successo'); caricaAmici(); });
+socket.on('richiestaAmicizia', ({ da }) => { mostraMessaggio(`${da} ti ha inviato una richiesta`,'info'); if(Notification.permission==='granted'&&document.hidden) try{new Notification('Scopone',{body:`${da} ti ha inviato una richiesta`});}catch(e){} caricaAmiciDebounced(); });
+socket.on('amiciziaAccettata', ({ da }) => { mostraMessaggio(`${da} ha accettato!`,'successo'); caricaAmiciDebounced(); });
 socket.on('invitoStanza', ({ da, codiceStanza }) => { if(confirm(`${da} ti invita nella stanza ${codiceStanza}. Unirsi?`)){document.getElementById('codiceStanza').value=codiceStanza; document.getElementById('btnUnisciti').click();} });
 
 // --- AUTH/ADMIN/TORNEO (identico a scopa) ---
@@ -795,6 +802,8 @@ socket.on('torneoAnnullato',()=>{torneoCorrenteId=null;if(schermate.torneo.class
 socket.on('connect', () => {
   const sess = getSessione();
   if (sess && sess.codice && sess.nome && getUtenteLoggato()) {
-    socket.emit('uniscitiStanza', { codice: sess.codice, nome: sess.nome });
+    socket.emit('autenticato', { nome: sess.nome });
+    if (sess.codice.startsWith('T')) socket.emit('uniscitiPartitaTorneo', { codiceStanza: sess.codice, nome: sess.nome });
+    else socket.emit('uniscitiStanza', { codice: sess.codice, nome: sess.nome });
   }
 });
