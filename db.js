@@ -28,6 +28,8 @@ try { db.exec('ALTER TABLE utenti ADD COLUMN password_temporanea INTEGER DEFAULT
 try { db.exec('ALTER TABLE utenti ADD COLUMN tornei_giocati INTEGER DEFAULT 0'); } catch (e) { /* gia' esiste */ }
 try { db.exec('ALTER TABLE utenti ADD COLUMN tornei_vinti INTEGER DEFAULT 0'); } catch (e) { /* gia' esiste */ }
 
+db.exec(`CREATE TABLE IF NOT EXISTS amici (id INTEGER PRIMARY KEY AUTOINCREMENT, utente TEXT NOT NULL, amico TEXT NOT NULL, stato TEXT NOT NULL DEFAULT 'pending', creato_il DATETIME DEFAULT CURRENT_TIMESTAMP, UNIQUE(utente, amico))`);
+
 // Tabelle tornei
 db.exec(`
   CREATE TABLE IF NOT EXISTS tornei (
@@ -178,4 +180,19 @@ function cancellaUtente(nome) {
   return { ok: true };
 }
 
-module.exports = { registra, login, aggiornaStats, getStats, getClassifica, isAdmin, getTuttiUtenti, resetPassword, cambiaPassword, cancellaUtente };
+function richiediAmicizia(utente, amico) {
+  if (utente === amico) return { ok: false, errore: 'Non puoi aggiungere te stesso' };
+  if (!stmts.trovaPerNome.get(amico)) return { ok: false, errore: 'Utente non trovato' };
+  if (db.prepare('SELECT 1 FROM amici WHERE utente = ? AND amico = ?').get(utente, amico)) return { ok: false, errore: 'Gia\' inviata o gia\' amici' };
+  const altra = db.prepare('SELECT id FROM amici WHERE utente = ? AND amico = ? AND stato = ?').get(amico, utente, 'pending');
+  if (altra) { db.prepare('UPDATE amici SET stato = ? WHERE id = ?').run('accepted', altra.id); db.prepare('INSERT INTO amici (utente, amico, stato) VALUES (?, ?, ?)').run(utente, amico, 'accepted'); return { ok: true, accettato: true }; }
+  db.prepare('INSERT INTO amici (utente, amico, stato) VALUES (?, ?, ?)').run(utente, amico, 'pending');
+  return { ok: true };
+}
+function accettaAmicizia(utente, amico) { const r = db.prepare('SELECT id FROM amici WHERE utente = ? AND amico = ? AND stato = ?').get(amico, utente, 'pending'); if (!r) return { ok: false, errore: 'Richiesta non trovata' }; db.prepare('UPDATE amici SET stato = ? WHERE id = ?').run('accepted', r.id); db.prepare('INSERT OR IGNORE INTO amici (utente, amico, stato) VALUES (?, ?, ?)').run(utente, amico, 'accepted'); return { ok: true }; }
+function rifiutaAmicizia(utente, amico) { db.prepare('DELETE FROM amici WHERE utente = ? AND amico = ?').run(amico, utente); return { ok: true }; }
+function rimuoviAmico(utente, amico) { db.prepare('DELETE FROM amici WHERE (utente = ? AND amico = ?) OR (utente = ? AND amico = ?)').run(utente, amico, amico, utente); return { ok: true }; }
+function getAmici(utente) { return db.prepare('SELECT amico as nome FROM amici WHERE utente = ? AND stato = ? ORDER BY amico').all(utente, 'accepted'); }
+function getRichiesteAmicizia(utente) { return db.prepare('SELECT utente as nome FROM amici WHERE amico = ? AND stato = ? ORDER BY creato_il DESC').all(utente, 'pending'); }
+
+module.exports = { registra, login, aggiornaStats, getStats, getClassifica, isAdmin, getTuttiUtenti, resetPassword, cambiaPassword, cancellaUtente, richiediAmicizia, accettaAmicizia, rifiutaAmicizia, rimuoviAmico, getAmici, getRichiesteAmicizia };

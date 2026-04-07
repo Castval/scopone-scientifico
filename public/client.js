@@ -518,16 +518,15 @@ socket.on('partitaIniziata', (stato) => {
 
 socket.on('statoAggiornato', (dati) => {
   const { cartaGiocata, giocatoreId, ...stato } = dati;
-
-  if (cartaGiocata && giocatoreId !== socket.id) {
-    mostraCartaAvversario(cartaGiocata, () => {
-      statoGioco = stato;
-      renderizzaGioco();
-    });
-  } else {
-    statoGioco = stato;
-    renderizzaGioco();
-  }
+  const eraTurnoMio = statoGioco?.turnoMio;
+  const onUpdate = () => {
+    statoGioco = stato; renderizzaGioco();
+    if (stato.turnoMio && !eraTurnoMio && document.hidden && Notification.permission === 'granted') {
+      try { const n = new Notification('Scopone', { body: 'È il tuo turno!', tag: 'scopone-turno', renotify: true }); n.onclick = () => { window.focus(); n.close(); }; } catch (e) {}
+    }
+  };
+  if (cartaGiocata && giocatoreId !== socket.id) mostraCartaAvversario(cartaGiocata, onUpdate);
+  else onUpdate();
 });
 
 // Mostra la carta giocata dall'avversario
@@ -693,6 +692,50 @@ socket.on('avversarioAbbandonato', ({ nome }) => {
 Object.defineProperty(window, 'statoGioco', { get() { return statoGioco; } });
 Object.defineProperty(window, 'socket', { get() { return socket; } });
 
+// --- NOTIFICHE ---
+function aggiornaIconaNotifiche() { const btn=document.getElementById('btnNotifiche'); if(!btn) return; if(!('Notification' in window)){btn.style.display='none';return;} if(Notification.permission==='granted'){btn.textContent='🔔';btn.classList.add('attive');} else if(Notification.permission==='denied'){btn.textContent='🔕';btn.classList.remove('attive');} else {btn.textContent='🔔';btn.classList.remove('attive');} }
+document.getElementById('btnNotifiche')?.addEventListener('click', async () => { if(!('Notification' in window)) return; if(Notification.permission==='default'){await Notification.requestPermission();aggiornaIconaNotifiche();} else if(Notification.permission==='denied'){alert('Notifiche bloccate');} else new Notification('Scopone',{body:'Notifiche attive!'}); });
+
+// --- CHAT LOBBY ---
+function aggiungiMessaggioChatLobby(msg) {
+  const cont = document.getElementById('chatLobbyMessaggi'); if (!cont) return;
+  const div = document.createElement('div'); div.className = 'chat-lobby-msg';
+  const ora = new Date(msg.timestamp).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+  const isSelf = msg.nome === getNomeUtente();
+  div.innerHTML = `<span class="chat-lobby-ora">${ora}</span> <span class="chat-lobby-nome${isSelf ? ' self' : ''}">${msg.nome}:</span> <span class="chat-lobby-testo">${msg.testo.replace(/[<>&]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]))}</span>`;
+  cont.appendChild(div); cont.scrollTop = cont.scrollHeight;
+}
+function inviaMessaggioChatLobby() { const inp=document.getElementById('chatLobbyInput'); const t=inp.value.trim(); if(!t) return; socket.emit('chatLobbyMessaggio',{testo:t}); inp.value=''; }
+document.getElementById('btnChatLobbyInvia')?.addEventListener('click', inviaMessaggioChatLobby);
+document.getElementById('chatLobbyInput')?.addEventListener('keydown', (e) => { if(e.key==='Enter') inviaMessaggioChatLobby(); });
+document.getElementById('toggleChatLobby')?.addEventListener('click', () => { const sez=document.querySelector('.sezione-chat-lobby'); sez.classList.toggle('chiusa'); if(!sez.classList.contains('chiusa')) socket.emit('chatLobbyStoria'); });
+socket.on('chatLobbyMessaggio', (msg) => aggiungiMessaggioChatLobby(msg));
+socket.on('chatLobbyStoria', (msgs) => { const cont=document.getElementById('chatLobbyMessaggi'); if(!cont) return; cont.innerHTML=''; msgs.forEach(aggiungiMessaggioChatLobby); });
+
+// --- AMICI ---
+async function caricaAmici() {
+  const nome = getNomeUtente(); if (!nome) return;
+  try {
+    const d = await (await fetch(`/api/amici/${encodeURIComponent(nome)}`)).json(); if (!d.ok) return;
+    const dOnline = await (await fetch(`/api/amici/${encodeURIComponent(nome)}/online`)).json();
+    const online = dOnline.ok ? dOnline.online : {};
+    document.getElementById('amiciCount').textContent = `(${d.amici.length})`;
+    const elRich = document.getElementById('amiciRichieste');
+    elRich.innerHTML = d.richieste.length > 0 ? '<h4 class="amici-titolo">Richieste</h4>' + d.richieste.map(r => `<div class="amico-row pending"><span class="amico-nome">${r.nome}</span><button class="btn-amico-accetta" data-nome="${r.nome}">Accetta</button><button class="btn-amico-rifiuta" data-nome="${r.nome}">Rifiuta</button></div>`).join('') : '';
+    const elLista = document.getElementById('amiciLista');
+    elLista.innerHTML = d.amici.length === 0 ? '<p class="amici-vuoto">Non hai ancora amici</p>' : d.amici.map(a => { const s=online[a.nome]||{online:false}; const dot=s.online?'<span class="amico-online"></span>':'<span class="amico-offline"></span>'; const stz=s.stanza?` <span class="amico-stanza">in ${s.stanza}</span>`:''; const inv=s.online&&getSessione()?.codice?`<button class="btn-amico-invita" data-nome="${a.nome}">Invita</button>`:''; return `<div class="amico-row">${dot}<span class="amico-nome">${a.nome}</span>${stz}${inv}<button class="btn-amico-rimuovi" data-nome="${a.nome}">×</button></div>`; }).join('');
+    elRich.querySelectorAll('.btn-amico-accetta').forEach(b => b.addEventListener('click', async (e) => { await fetch('/api/amici/accetta',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({utente:nome,amico:e.target.dataset.nome})}); caricaAmici(); }));
+    elRich.querySelectorAll('.btn-amico-rifiuta').forEach(b => b.addEventListener('click', async (e) => { await fetch('/api/amici/rifiuta',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({utente:nome,amico:e.target.dataset.nome})}); caricaAmici(); }));
+    elLista.querySelectorAll('.btn-amico-rimuovi').forEach(b => b.addEventListener('click', async (e) => { if(!confirm(`Rimuovere ${e.target.dataset.nome}?`)) return; await fetch('/api/amici/rimuovi',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({utente:nome,amico:e.target.dataset.nome})}); caricaAmici(); }));
+    elLista.querySelectorAll('.btn-amico-invita').forEach(b => b.addEventListener('click', (e) => { const c=getSessione()?.codice; if(!c){alert('Devi essere in una stanza');return;} socket.emit('invitaAmico',{amico:e.target.dataset.nome,codiceStanza:c}); mostraMessaggio(`Invito inviato a ${e.target.dataset.nome}`,'successo'); }));
+  } catch (e) {}
+}
+document.getElementById('btnAggiungiAmico')?.addEventListener('click', async () => { const inp=document.getElementById('amiciNomeInput'); const a=inp.value.trim(); if(!a) return; const r=await(await fetch('/api/amici/richiedi',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({utente:getNomeUtente(),amico:a})})).json(); if(!r.ok){mostraMessaggio(r.errore,'errore');return;} inp.value=''; mostraMessaggio(r.accettato?'Ora siete amici!':'Richiesta inviata','successo'); caricaAmici(); });
+document.getElementById('toggleAmici')?.addEventListener('click', () => document.querySelector('.sezione-amici').classList.toggle('chiusa'));
+socket.on('richiestaAmicizia', ({ da }) => { mostraMessaggio(`${da} ti ha inviato una richiesta`,'info'); if(Notification.permission==='granted'&&document.hidden) try{new Notification('Scopone',{body:`${da} ti ha inviato una richiesta`});}catch(e){} caricaAmici(); });
+socket.on('amiciziaAccettata', ({ da }) => { mostraMessaggio(`${da} ha accettato!`,'successo'); caricaAmici(); });
+socket.on('invitoStanza', ({ da, codiceStanza }) => { if(confirm(`${da} ti invita nella stanza ${codiceStanza}. Unirsi?`)){document.getElementById('codiceStanza').value=codiceStanza; document.getElementById('btnUnisciti').click();} });
+
 // --- AUTH/ADMIN/TORNEO (identico a scopa) ---
 function mostraMessaggioAuth(testo, tipo = 'errore') { const el = document.getElementById('messaggioAuth'); el.textContent = testo; el.className = 'messaggio ' + tipo; el.style.display = 'inline-block'; setTimeout(() => { el.style.display = 'none'; }, 4000); }
 let privacyReturnScreen = 'auth';
@@ -714,7 +757,7 @@ document.getElementById('btnRegistra').addEventListener('click', async () => { c
 document.getElementById('btnEliminaAccount').addEventListener('click', async () => { if (!confirm('Eliminare il tuo account?')) return; if (!confirm('Confermi?')) return; const d = await (await fetch('/api/eliminaaccount', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ nome:getNomeUtente() }) })).json(); if (d.ok) { setUtenteLoggato(null); setSessione(null); mostraSchermata('auth'); mostraMessaggioAuth('Account eliminato','successo'); } });
 document.getElementById('btnLogout').addEventListener('click', () => { setUtenteLoggato(null); setSessione(null); mostraSchermata('auth'); });
 
-async function entraInLobby() { document.getElementById('userNome').textContent=getNomeUtente(); socket.emit('autenticato',{nome:getNomeUtente()}); try { const d=await(await fetch(`/api/stats/${encodeURIComponent(getNomeUtente())}`)).json(); if(d.ok){const s=d.stats;const t=s.tornei_giocati>0?` | Tornei: ${s.tornei_vinti}/${s.tornei_giocati}`:''; document.getElementById('userStats').innerHTML=`${s.partite_giocate} partite | ${s.partite_vinte}V ${s.partite_perse}P | ${s.punti} pt${t}`;} } catch{} if(isAdmin) document.getElementById('btnAdmin').classList.remove('nascosto'); else { document.getElementById('btnAdmin').classList.add('nascosto'); document.getElementById('pannelloAdmin').classList.add('nascosto'); } caricaClassifica(); mostraSchermata('lobby'); }
+async function entraInLobby() { document.getElementById('userNome').textContent=getNomeUtente(); socket.emit('autenticato',{nome:getNomeUtente()}); try { const d=await(await fetch(`/api/stats/${encodeURIComponent(getNomeUtente())}`)).json(); if(d.ok){const s=d.stats;const t=s.tornei_giocati>0?` | Tornei: ${s.tornei_vinti}/${s.tornei_giocati}`:''; document.getElementById('userStats').innerHTML=`${s.partite_giocate} partite | ${s.partite_vinte}V ${s.partite_perse}P | ${s.punti} pt${t}`;} } catch{} if(isAdmin) document.getElementById('btnAdmin').classList.remove('nascosto'); else { document.getElementById('btnAdmin').classList.add('nascosto'); document.getElementById('pannelloAdmin').classList.add('nascosto'); } caricaClassifica(); aggiornaIconaNotifiche(); caricaAmici(); mostraSchermata('lobby'); }
 async function caricaClassifica() { try { const d=await(await fetch('/api/classifica')).json(); const body=document.getElementById('classificaBody'); body.innerHTML=''; if(!d.ok||d.classifica.length===0){body.innerHTML='<tr><td colspan="6">Nessuno</td></tr>';return;} d.classifica.forEach((g,i)=>{const tr=document.createElement('tr');if(g.nome===getNomeUtente())tr.className='utente-corrente';const t=g.tornei_vinti>0?`${g.tornei_vinti}/${g.tornei_giocati}`:'-';tr.innerHTML=`<td>${i+1}</td><td class="nome-col">${g.nome}</td><td>${g.partite_vinte}</td><td>${g.partite_perse}</td><td><strong>${g.punti}</strong></td><td>${t}</td>`;body.appendChild(tr);}); } catch{} }
 document.getElementById('toggleClassifica')?.addEventListener('click', () => document.querySelector('.sezione-classifica').classList.toggle('chiusa'));
 

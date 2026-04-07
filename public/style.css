@@ -895,3 +895,37 @@ body {
 .storage-banner { position: fixed; bottom: 0; left: 0; right: 0; z-index: 9999; background: rgba(0,0,0,0.95); border-top: 1px solid rgba(212,175,55,0.3); padding: 15px 20px; display: flex; align-items: center; justify-content: center; gap: 15px; font-size: 0.85em; color: #ccc; }
 .storage-banner p { margin: 0; flex: 1; max-width: 600px; }
 .storage-banner a { color: #d4af37; }
+
+/* === NOTIFICHE/CHAT/AMICI === */
+.btn-notifiche { background: rgba(255,255,255,0.1); border: none; color: #fff; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 1em; }
+.btn-notifiche:hover { background: rgba(255,255,255,0.2); }
+.btn-notifiche.attive { background: rgba(76,175,80,0.3); }
+.sezione-chat-lobby, .sezione-amici { margin-top: 20px; padding: 20px; background: rgba(0,0,0,0.3); border-radius: 12px; max-width: 500px; margin-left: auto; margin-right: auto; }
+.sezione-chat-lobby h3, .sezione-amici h3 { text-align: center; color: #d4af37; margin-bottom: 15px; cursor: pointer; }
+.sezione-chat-lobby h3::after, .sezione-amici h3::after { content: " \25BC"; font-size: 0.7em; }
+.sezione-chat-lobby.chiusa h3::after, .sezione-amici.chiusa h3::after { content: " \25B6"; }
+.sezione-chat-lobby.chiusa .chat-lobby-contenuto, .sezione-amici.chiusa .amici-contenuto { display: none; }
+.chat-lobby-messaggi { max-height: 250px; overflow-y: auto; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 6px; margin-bottom: 10px; text-align: left; font-size: 0.85em; }
+.chat-lobby-msg { margin-bottom: 4px; word-wrap: break-word; }
+.chat-lobby-ora { color: #666; font-size: 0.8em; }
+.chat-lobby-nome { color: #8bc48b; font-weight: bold; }
+.chat-lobby-nome.self { color: #d4af37; }
+.chat-lobby-testo { color: #e0e0e0; }
+.chat-lobby-input-row { display: flex; gap: 8px; }
+.chat-lobby-input-row input { flex: 1; padding: 8px; border-radius: 6px; border: none; font-size: 0.9em; }
+.amici-aggiungi { display: flex; gap: 8px; margin-bottom: 15px; }
+.amici-aggiungi input { flex: 1; padding: 8px; border-radius: 6px; border: none; font-size: 0.9em; }
+.amici-titolo { color: #ffc107; font-size: 0.85em; margin: 10px 0 5px; }
+.amici-vuoto { color: #666; text-align: center; font-style: italic; padding: 10px; font-size: 0.9em; }
+.amico-row { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: rgba(255,255,255,0.05); border-radius: 6px; margin-bottom: 4px; font-size: 0.9em; }
+.amico-row.pending { background: rgba(255,193,7,0.1); }
+.amico-online { width: 8px; height: 8px; border-radius: 50%; background: #4caf50; box-shadow: 0 0 4px #4caf50; }
+.amico-offline { width: 8px; height: 8px; border-radius: 50%; background: #555; }
+.amico-nome { color: #e0e0e0; flex: 1; }
+.amico-stanza { font-size: 0.75em; color: #d4af37; }
+.btn-amico-accetta { padding: 4px 10px; font-size: 0.75em; border: none; border-radius: 4px; background: #4caf50; color: #fff; cursor: pointer; }
+.btn-amico-rifiuta { padding: 4px 10px; font-size: 0.75em; border: none; border-radius: 4px; background: #ef5350; color: #fff; cursor: pointer; }
+.btn-amico-invita { padding: 4px 10px; font-size: 0.75em; border: none; border-radius: 4px; background: rgba(212,175,55,0.4); color: #d4af37; cursor: pointer; }
+.btn-amico-rimuovi { padding: 2px 8px; font-size: 1em; border: none; border-radius: 4px; background: transparent; color: #888; cursor: pointer; }
+.btn-amico-rimuovi:hover { color: #ef5350; }
+

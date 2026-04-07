@@ -73,6 +73,7 @@
       <div id="userBar" class="user-bar">
         <span id="userNome"></span>
         <div id="userStats" class="user-stats"></div>
+        <button id="btnNotifiche" class="btn-notifiche" title="Attiva notifiche">🔔</button>
         <button id="btnAdmin" class="btn-admin nascosto">Admin</button>
         <button id="btnEliminaAccount" class="btn-elimina-account">Elimina account</button>
         <button id="btnLogout" class="btn-logout">Esci</button>
@@ -122,6 +123,23 @@
       </div>
 
       <div id="messaggioLobby" class="messaggio"></div>
+
+      <div class="sezione-chat-lobby chiusa">
+        <h3 id="toggleChatLobby">Chat</h3>
+        <div class="chat-lobby-contenuto">
+          <div id="chatLobbyMessaggi" class="chat-lobby-messaggi"></div>
+          <div class="chat-lobby-input-row"><input type="text" id="chatLobbyInput" placeholder="Scrivi un messaggio..." maxlength="200"><button id="btnChatLobbyInvia" class="btn-piccolo btn-primario">Invia</button></div>
+        </div>
+      </div>
+
+      <div class="sezione-amici chiusa">
+        <h3 id="toggleAmici">Amici <span id="amiciCount"></span></h3>
+        <div class="amici-contenuto">
+          <div class="amici-aggiungi"><input type="text" id="amiciNomeInput" placeholder="Nome utente" maxlength="20"><button id="btnAggiungiAmico" class="btn-piccolo btn-primario">Aggiungi</button></div>
+          <div id="amiciRichieste"></div>
+          <div id="amiciLista"></div>
+        </div>
+      </div>
 
       <div class="sezione-classifica chiusa">
         <h3 id="toggleClassifica">Classifica</h3>
