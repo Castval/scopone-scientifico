@@ -750,15 +750,39 @@ body {
 
 /* Responsive */
 @media (max-width: 600px) {
+  #app { padding: 6px; }
+
+  #gioco.attiva { display: flex; flex-direction: column; min-height: 100vh; }
+
   .carta {
-    width: 55px;
-    height: 96px;
+    width: 48px;
+    height: 84px;
   }
 
   .info-partita {
-    flex-direction: column;
-    gap: 10px;
+    flex-direction: row;
+    gap: 6px;
+    padding: 6px 8px;
+    margin-bottom: 6px;
+    font-size: 0.75em;
   }
+  .info-giocatore { gap: 1px; }
+  .info-giocatore .nome { font-size: 0.95em; }
+  .info-centro { font-size: 0.85em; }
+  #turnoIndicatore { padding: 3px 8px; font-size: 0.85em; }
+  .obiettivo-info, .mazzo-info { display: block; font-size: 0.85em; }
+
+  .area-avversario h3, .area-giocatore h3, .tavolo-container h3, .area-prese h4 {
+    display: none;
+  }
+
+  .mano-carte { gap: 4px; min-height: auto; }
+  .tavolo { gap: 4px; min-height: 90px; padding: 2px; }
+  .tavolo-container { padding: 6px; margin: 6px 0; }
+  .area-avversario, .area-giocatore { margin: 4px 0; }
+
+  .azioni-mossa { margin: 6px 0; padding: 6px; }
+  .azioni-mossa button { padding: 6px 12px; font-size: 0.85em; margin: 2px; }
 
   .riepilogo-punti {
     flex-direction: column;
@@ -767,29 +791,39 @@ body {
 
   .area-giocatore-container,
   .area-avversario-container {
-    flex-direction: column;
-    align-items: center;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 4px 0;
   }
 
-  .area-prese {
-    order: 2;
-    margin-top: 20px;
-  }
-
-  .area-avversario-container .area-prese {
-    order: 2;
+  .area-prese, .area-avversario-container .area-prese {
+    order: initial;
+    margin-top: 0;
+    min-width: auto;
   }
 
   .mazzo-prese {
-    width: 70px;
-    height: 130px;
+    width: 50px;
+    height: 84px;
   }
 
   .mazzo-prese .carta-presa,
   .mazzo-prese .carta-scopa {
-    width: 55px;
-    height: 96px;
+    width: 40px;
+    height: 70px;
   }
+
+  .mazzo-prese .scopa-punti { font-size: 10px; padding: 2px 5px; top: -18px; }
+  .contatore-prese { font-size: 0.75em; margin-top: 4px; }
+}
+
+/* Sicurezza: nascondi sezioni della lobby quando non si è in lobby */
+#lobby:not(.attiva) .sezione-chat-lobby,
+#lobby:not(.attiva) .sezione-amici,
+#lobby:not(.attiva) .sezione-classifica,
+#lobby:not(.attiva) .sezione-regole {
+  display: none !important;
 }
 
 /* === AUTH/ADMIN/TORNEO/PRIVACY === */

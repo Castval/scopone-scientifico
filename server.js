@@ -348,6 +348,25 @@ io.on('connection', (socket) => {
     }
   });
 
+  // Torna alla lobby (solo se partita finita)
+  socket.on('tornaLobby', () => {
+    const codice = socket.codiceStanza;
+    if (!codice) return;
+    const partita = stanze.get(codice);
+    if (!partita) return;
+    if (partita.stato !== 'finePartita') return;
+    const giocatore = partita.giocatori.find(g => g.id === socket.id);
+    if (!giocatore) return;
+    partita.rimuoviGiocatore(socket.id);
+    socket.leave(codice);
+    socket.codiceStanza = null;
+    io.to(codice).emit('avversarioAbbandonato', { nome: giocatore.nome });
+    if (partita.giocatori.length === 0) {
+      stanze.delete(codice);
+      console.log(`Stanza ${codice} eliminata`);
+    }
+  });
+
   // Disconnessione
   socket.on('disconnect', () => {
     console.log(`Giocatore disconnesso: ${socket.id}`);

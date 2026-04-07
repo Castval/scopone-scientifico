@@ -491,6 +491,14 @@ document.getElementById('btnNuovaPartita').addEventListener('click', () => {
   socket.emit('nuovaPartita');
 });
 
+document.getElementById('btnTornaLobby').addEventListener('click', () => {
+  socket.emit('tornaLobby');
+  setSessione(null);
+  if (typeof partitaTorneoCorrente !== 'undefined') partitaTorneoCorrente = false;
+  statoGioco = null;
+  mostraSchermata('lobby');
+});
+
 // Socket events
 socket.on('stanzaCreata', ({ codice, nome }) => {
   const s = getSessione(); if (s) { s.codice = codice; setSessione(s); }
@@ -572,6 +580,8 @@ socket.on('combinazioniDisponibili', ({ cartaId, combinazioni, puoiPosare: posar
     return;
   }
 
+  mostraMessaggio('Clicca la carta sul tavolo da prendere e premi conferma', 'info');
+
   // Evidenzia carte selezionabili
   document.querySelectorAll('#tavolo .carta').forEach(el => {
     el.classList.remove('selezionabile');
@@ -595,19 +605,23 @@ socket.on('fineRound', ({ stato, puntiRound, dettagliGiocatore, dettagliAvversar
   const btnProssimo = document.getElementById('btnProssimoRound');
   const btnNuova = document.getElementById('btnNuovaPartita');
 
+  const btnLobby = document.getElementById('btnTornaLobby');
   if (finePartita) {
     titoloEl.textContent = vincitore === statoGioco.nomeGiocatore ?
       'Hai vinto!' : `${vincitore} ha vinto!`;
     btnProssimo.classList.add('nascosto');
     btnNuova.classList.remove('nascosto');
+    btnLobby.classList.remove('nascosto');
   } else if (pareggio) {
     titoloEl.textContent = 'Pareggio! Si continua...';
     btnProssimo.classList.remove('nascosto');
     btnNuova.classList.add('nascosto');
+    btnLobby.classList.add('nascosto');
   } else {
     titoloEl.textContent = 'Fine Smazzata';
     btnProssimo.classList.remove('nascosto');
     btnNuova.classList.add('nascosto');
+    btnLobby.classList.add('nascosto');
   }
 
   // Mostra nomi
