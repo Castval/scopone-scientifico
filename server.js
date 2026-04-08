@@ -16,7 +16,7 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // --- API Auth ---
-app.post('/api/registra', (req, res) => { res.json(db.registra(req.body.nome, req.body.email, req.body.password)); });
+app.post('/api/registra', (req, res) => { res.json(db.registra(req.body.nome, req.body.email, req.body.password, req.body.citta)); });
 app.post('/api/login', (req, res) => { res.json(db.login(req.body.nome, req.body.password)); });
 app.get('/api/stats/:nome', (req, res) => { const s = db.getStats(req.params.nome); res.json(s ? { ok: true, stats: s } : { ok: false }); });
 app.get('/api/classifica', (req, res) => { res.json({ ok: true, classifica: db.getClassifica() }); });

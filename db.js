@@ -27,6 +27,7 @@ db.exec(`
 try { db.exec('ALTER TABLE utenti ADD COLUMN password_temporanea INTEGER DEFAULT 0'); } catch (e) { /* gia' esiste */ }
 try { db.exec('ALTER TABLE utenti ADD COLUMN tornei_giocati INTEGER DEFAULT 0'); } catch (e) { /* gia' esiste */ }
 try { db.exec('ALTER TABLE utenti ADD COLUMN tornei_vinti INTEGER DEFAULT 0'); } catch (e) { /* gia' esiste */ }
+try { db.exec('ALTER TABLE utenti ADD COLUMN citta TEXT'); } catch (e) { /* gia' esiste */ }
 
 db.exec(`CREATE TABLE IF NOT EXISTS amici (id INTEGER PRIMARY KEY AUTOINCREMENT, utente TEXT NOT NULL, amico TEXT NOT NULL, stato TEXT NOT NULL DEFAULT 'pending', creato_il DATETIME DEFAULT CURRENT_TIMESTAMP, UNIQUE(utente, amico))`);
 
@@ -92,7 +93,7 @@ db.exec(`
 
 
 const stmts = {
-  registra: db.prepare('INSERT INTO utenti (nome, email, password_hash) VALUES (?, ?, ?)'),
+  registra: db.prepare('INSERT INTO utenti (nome, email, password_hash, citta) VALUES (?, ?, ?, ?)'),
   trovaPerNome: db.prepare('SELECT * FROM utenti WHERE nome = ?'),
   trovaPerEmail: db.prepare('SELECT * FROM utenti WHERE email = ?'),
   aggiornaStats: db.prepare(`
@@ -107,25 +108,30 @@ const stmts = {
   getClassifica: db.prepare('SELECT nome, partite_giocate, partite_vinte, partite_perse, punti, tornei_giocati, tornei_vinti FROM utenti ORDER BY punti DESC LIMIT 20')
 };
 
-function registra(nome, email, password) {
+function registra(nome, email, password, citta) {
   nome = nome.trim();
   email = email.trim().toLowerCase();
+  citta = (citta || '').trim();
   if (!nome || nome.length < 2 || nome.length > 20) return { ok: false, errore: 'Nome deve essere tra 2 e 20 caratteri' };
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { ok: false, errore: 'Email non valida' };
   if (password.length < 4) return { ok: false, errore: 'Password deve avere almeno 4 caratteri' };
+  if (!citta || citta.length < 2 || citta.length > 50) return { ok: false, errore: 'Città deve essere tra 2 e 50 caratteri' };
 
   if (stmts.trovaPerNome.get(nome)) return { ok: false, errore: 'Nome già in uso' };
   if (stmts.trovaPerEmail.get(email)) return { ok: false, errore: 'Email già registrata' };
 
   const hash = bcrypt.hashSync(password, 10);
-  stmts.registra.run(nome, email, hash);
+  stmts.registra.run(nome, email, hash, citta);
   return { ok: true };
 }
 
-function login(nome, password) {
-  nome = nome.trim();
-  const utente = stmts.trovaPerNome.get(nome);
-  if (!utente) return { ok: false, errore: 'Nome non trovato' };
+function login(identificativo, password) {
+  identificativo = (identificativo || '').trim();
+  let utente = stmts.trovaPerNome.get(identificativo);
+  if (!utente && identificativo.includes('@')) {
+    utente = stmts.trovaPerEmail.get(identificativo.toLowerCase());
+  }
+  if (!utente) return { ok: false, errore: 'Utente non trovato' };
   if (!bcrypt.compareSync(password, utente.password_hash)) return { ok: false, errore: 'Password errata' };
   return { ok: true, nome: utente.nome, admin: utente.email === ADMIN_EMAIL, passwordTemporanea: !!utente.password_temporanea };
 }

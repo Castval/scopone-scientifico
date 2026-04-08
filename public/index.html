@@ -14,7 +14,7 @@
       <p class="sottotitolo">Gioco di carte con 40 carte napoletane - 2 giocatori</p>
       <div id="authLogin" class="auth-form">
         <h2>Accedi</h2>
-        <div class="form-gruppo"><input type="text" id="loginNome" placeholder="Nome utente" maxlength="20"></div>
+        <div class="form-gruppo"><input type="text" id="loginNome" placeholder="Nome utente o email"></div>
         <div class="form-gruppo"><input type="password" id="loginPassword" placeholder="Password"></div>
         <button id="btnLogin" class="btn-primario">Accedi</button>
         <p class="auth-switch">Non hai un account? <a href="#" id="mostraRegistra">Registrati</a></p>
@@ -24,6 +24,7 @@
         <div class="form-gruppo"><input type="text" id="regNome" placeholder="Nome utente" maxlength="20"></div>
         <div class="form-gruppo"><input type="email" id="regEmail" placeholder="Email"></div>
         <div class="form-gruppo"><input type="password" id="regPassword" placeholder="Password (min 4 caratteri)"></div>
+        <div class="form-gruppo"><input type="text" id="regCitta" placeholder="Città" maxlength="50"></div>
         <label class="gdpr-checkbox"><input type="checkbox" id="regConsensoPrv"> Ho letto e accetto l'<a href="#" id="linkPrivacyReg">informativa sulla privacy</a></label>
         <button id="btnRegistra" class="btn-primario">Registrati</button>
         <p class="auth-switch">Hai gia un account? <a href="#" id="mostraLogin">Accedi</a></p>
@@ -37,6 +38,33 @@
       </div>
       <div id="messaggioAuth" class="messaggio"></div>
       <p class="auth-footer"><a href="#" id="linkPrivacyAuth">Informativa sulla Privacy</a></p>
+
+      <div class="sezione-regole">
+        <h3>Regole</h3>
+        <div class="regole-contenuto">
+          <p><strong>Mazzo:</strong> 40 carte napoletane (1 mazzo)</p>
+          <p><strong>Distribuzione:</strong> 10 carte a testa, nessuna carta al tavolo</p>
+          <p><strong>Turno:</strong> si pesca 1 carta dal mazzo, poi si gioca</p>
+
+          <h4>Prese</h4>
+          <ul>
+            <li>Se c'è una carta singola dello stesso valore, devi prenderla (ha priorità sulle somme)</li>
+            <li>Se non puoi prendere, devi posare la carta al tavolo</li>
+            <li>L'asso vale 1 (non prende tutto)</li>
+          </ul>
+
+          <h4>Punteggi</h4>
+          <ul>
+            <li><strong>Scopa:</strong> 1 punto (l'ultima presa del round non conta come scopa)</li>
+            <li><strong>Settebello (7 di denari):</strong> 1 punto</li>
+            <li><strong>Più carte di denari:</strong> 1 punto</li>
+            <li><strong>Più carte totali:</strong> 1 punto</li>
+            <li><strong>Primiera:</strong> 1 punto</li>
+          </ul>
+
+          <p><strong>Vittoria:</strong> punti scelti dal creatore della stanza</p>
+        </div>
+      </div>
     </div>
 
     <!-- Torneo -->
