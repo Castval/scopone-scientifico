@@ -18,11 +18,11 @@ body {
 }
 
 .schermata {
-  display: none;
+  display: none !important;
 }
 
 .schermata.attiva {
-  display: block;
+  display: block !important;
 }
 
 /* Lobby */
